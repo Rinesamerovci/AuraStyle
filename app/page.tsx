@@ -1,415 +1,326 @@
 'use client';
-import { useState } from 'react';
 
-export default function Home() {
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState('');
-  const [error, setError] = useState('');
+import { useEffect } from 'react';
+import { useAuth } from '@/app/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-    setLoading(true);
-    setError('');
-    setResponse('');
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
-      });
-
-      if (!res.ok) throw new Error('Gabim nga serveri: ' + res.status);
-
-      const data = await res.json();
-      setResponse(data.reply);
-    } catch (err: any) {
-      setError(err.message || 'Diçka shkoi gabim. Provo përsëri.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
     }
-  };
+  }, [user, loading, router]);
+
+  if (loading) return null;
+  if (user) return null;
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --ink: #0d0d0d;
+          --cream: #f5f0e8;
+          --gold: #c9a96e;
+          --gold-light: #e8d5b0;
+          --muted: #6b6560;
+          --border: rgba(201, 169, 110, 0.2);
+        }
 
         body {
-          background: #09090b;
-          background-image: radial-gradient(circle at 50% 0%, #18181b 0%, #09090b 70%);
-          color: #fafafa;
-          font-family: 'Inter', sans-serif;
+          background: var(--ink);
+          color: var(--cream);
+          font-family: 'DM Sans', sans-serif;
           min-height: 100vh;
-          -webkit-font-smoothing: antialiased;
+          overflow-x: hidden;
         }
 
-        .page {
+        nav {
+          position: fixed;
+          top: 0; left: 0; right: 0;
+          z-index: 100;
+          padding: 24px 48px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nav-logo {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 26px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          color: var(--cream);
+          text-decoration: none;
+          text-transform: uppercase;
+        }
+
+        .nav-actions { display: flex; align-items: center; gap: 32px; }
+
+        .nav-link {
+          font-size: 13px;
+          letter-spacing: 0.08em;
+          color: var(--muted);
+          text-decoration: none;
+          text-transform: uppercase;
+          transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--cream); }
+
+        .nav-cta {
+          font-size: 12px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--ink);
+          background: var(--gold);
+          padding: 10px 24px;
+          text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .nav-cta:hover { background: var(--gold-light); }
+
+        .hero {
+          position: relative;
           min-height: 100vh;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          overflow: hidden;
+        }
+
+        .hero-left {
           display: flex;
           flex-direction: column;
+          justify-content: center;
+          padding: 140px 64px 80px;
+        }
+
+        .hero-badge {
+          display: inline-flex;
           align-items: center;
-          padding: 80px 24px;
-        }
-
-        .header {
-          text-align: center;
-          margin-bottom: 48px;
-        }
-
-        .eyebrow {
-          font-family: 'Outfit', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
+          gap: 8px;
+          font-size: 11px;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #a1a1aa;
-          margin-bottom: 12px;
+          color: var(--gold);
+          margin-bottom: 40px;
         }
+        .hero-badge::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
 
-        .logo {
-          font-family: 'Outfit', sans-serif;
-          font-size: 56px;
-          font-weight: 700;
-          letter-spacing: -0.02em;
-          background: linear-gradient(135deg, #c084fc 0%, #818cf8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          line-height: 1.1;
-          margin-bottom: 16px;
+        .hero-title {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: clamp(64px, 7vw, 96px);
+          font-weight: 300;
+          line-height: 0.95;
+          color: var(--cream);
+          margin-bottom: 32px;
         }
+        .hero-title em { font-style: italic; color: var(--gold); }
 
-        .tagline {
-          font-size: 15px;
-          font-weight: 400;
-          color: #71717a;
-        }
-
-        .card {
-          width: 100%;
-          max-width: 620px;
-          background: rgba(24, 24, 27, 0.6);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 24px;
-          padding: 40px;
-          margin-bottom: 24px;
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .label {
-          font-family: 'Outfit', sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          color: #e4e4e7;
-          margin-bottom: 12px;
-          display: block;
-        }
-
-        .chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 28px;
-        }
-
-        .chip {
-          font-size: 13px;
-          font-family: 'Inter', sans-serif;
-          font-weight: 500;
-          padding: 8px 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.03);
-          color: #a1a1aa;
-          cursor: pointer;
-          border-radius: 999px;
-          transition: all 0.2s ease;
-        }
-
-        .chip:hover { 
-          border-color: rgba(255, 255, 255, 0.2); 
-          color: #fafafa; 
-        }
-
-        .chip.active {
-          border-color: #8b5cf6;
-          background: #8b5cf6;
-          color: #ffffff;
-          box-shadow: 0 0 16px rgba(139, 92, 246, 0.4);
-        }
-
-        textarea {
-          width: 100%;
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          padding: 16px;
-          font-family: 'Inter', sans-serif;
-          font-size: 15px;
-          font-weight: 400;
-          color: #fafafa;
-          resize: none;
-          height: 120px;
-          outline: none;
-          transition: all 0.2s ease;
-          line-height: 1.6;
-        }
-
-        textarea::placeholder { color: #52525b; }
-        
-        textarea:focus { 
-          border-color: #8b5cf6;
-          background: rgba(0, 0, 0, 0.3);
-          box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
-        }
-        
-        textarea:disabled { opacity: 0.5; }
-
-        .submit-btn {
-          width: 100%;
-          margin-top: 16px;
-          padding: 16px;
-          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-          border: none;
-          border-radius: 16px;
-          font-family: 'Outfit', sans-serif;
-          font-size: 16px;
-          font-weight: 600;
-          color: #ffffff;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-        }
-
-        .submit-btn:hover:not(:disabled) { 
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); 
-        }
-
-        .submit-btn:disabled {
-          background: #27272a;
-          color: #52525b;
-          box-shadow: none;
-          cursor: not-allowed;
-        }
-
-        .loading-wrap {
-          width: 100%;
-          max-width: 620px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 24px 0;
-          background: rgba(24, 24, 27, 0.4);
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .spinner {
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(255, 255, 255, 0.1);
-          border-top-color: #8b5cf6;
-          border-radius: 50%;
-          animation: spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-text {
-          font-family: 'Inter', sans-serif;
-          font-size: 14px;
-          font-weight: 500;
-          color: #a1a1aa;
-        }
-
-        .response-card {
-          width: 100%;
-          max-width: 620px;
-          background: rgba(24, 24, 27, 0.8);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(139, 92, 246, 0.3);
-          border-radius: 24px;
-          padding: 40px;
-          animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .response-eyebrow {
-          font-family: 'Outfit', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #a78bfa;
-          margin-bottom: 20px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .response-eyebrow::before {
-          content: '';
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          background: #a78bfa;
-          border-radius: 50%;
-          box-shadow: 0 0 10px #a78bfa;
-        }
-
-        .response-text {
+        .hero-sub {
           font-size: 15px;
           font-weight: 300;
           line-height: 1.8;
-          color: #e4e4e7;
-          white-space: pre-wrap;
+          color: var(--muted);
+          max-width: 400px;
+          margin-bottom: 56px;
         }
 
-        .error-card {
-          width: 100%;
-          max-width: 620px;
-          background: rgba(225, 29, 72, 0.1);
-          border: 1px solid rgba(225, 29, 72, 0.3);
-          border-radius: 16px;
-          padding: 16px 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-        }
+        .hero-actions { display: flex; align-items: center; gap: 24px; }
 
-        .error-text {
-          font-size: 14px;
-          color: #fda4af;
-          font-weight: 400;
+        .btn-primary {
+          font-size: 12px;
+          font-weight: 500;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--ink);
+          background: var(--cream);
+          padding: 16px 36px;
+          text-decoration: none;
+          border: 1px solid var(--cream);
+          transition: all 0.25s ease;
         }
+        .btn-primary:hover { background: var(--gold); border-color: var(--gold); }
 
-        .error-label {
-          font-family: 'Outfit', sans-serif;
-          font-size: 11px;
-          font-weight: 600;
+        .btn-ghost {
+          font-size: 12px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: #f43f5e;
-          margin-bottom: 4px;
+          color: var(--muted);
+          text-decoration: none;
+          transition: color 0.2s;
         }
+        .btn-ghost:hover { color: var(--cream); }
 
-        .error-close {
-          background: none;
-          border: none;
-          color: #fda4af;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 4px;
-          transition: opacity 0.2s;
-        }
-        
-        .error-close:hover { opacity: 0.7; }
+        .hero-right { position: relative; overflow: hidden; }
 
-        .new-btn {
-          margin-top: 32px;
-          padding: 10px 20px;
-          font-size: 13px;
-          font-weight: 500;
-          color: #a1a1aa;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 99px;
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          transition: all 0.2s;
-          display: inline-flex;
+        .hero-visual {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, #1a1510 0%, #0d0d0d 50%, #12100e 100%);
+          display: flex;
           align-items: center;
-          gap: 6px;
+          justify-content: center;
+        }
+        .hero-visual::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 60% 40%, rgba(201,169,110,0.12) 0%, transparent 60%);
         }
 
-        .new-btn:hover { 
-          color: #fafafa; 
-          background: rgba(255, 255, 255, 0.1);
+        .fashion-circles { position: relative; width: 280px; height: 380px; }
+
+        .fc-ring { position: absolute; border: 1px solid; border-radius: 50%; }
+        .fc-ring-1 { width: 280px; height: 280px; top: 50px; left: 0; border-color: rgba(201,169,110,0.15); }
+        .fc-ring-2 { width: 200px; height: 200px; top: 90px; left: 40px; border-color: rgba(201,169,110,0.25); }
+        .fc-ring-3 { width: 120px; height: 120px; top: 130px; left: 80px; border-color: rgba(201,169,110,0.4); animation: rotateSlow 12s linear infinite; }
+        .fc-core { position: absolute; width: 48px; height: 48px; top: 156px; left: 116px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 40px rgba(201,169,110,0.5); }
+
+        @keyframes rotateSlow { to { transform: rotate(360deg); } }
+
+        .color-swatches { display: flex; gap: 12px; margin-top: 48px; }
+        .swatch { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); }
+
+        .marquee-wrap {
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
+          padding: 16px 0;
+          overflow: hidden;
+        }
+        .marquee-track { display: flex; white-space: nowrap; animation: marquee 20s linear infinite; }
+        .marquee-item { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 0 40px; }
+        .marquee-item span { color: var(--gold); margin-right: 40px; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        .features { padding: 120px 64px; }
+
+        .section-label {
+          font-size: 11px;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: var(--gold);
+          margin-bottom: 64px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); max-width: 200px; }
+
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+
+        .feature-item { background: var(--ink); padding: 48px 40px; transition: background 0.3s; }
+        .feature-item:hover { background: #111009; }
+
+        .feature-num { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; color: var(--border); line-height: 1; margin-bottom: 24px; }
+        .feature-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 500; color: var(--cream); margin-bottom: 12px; }
+        .feature-desc { font-size: 14px; font-weight: 300; color: var(--muted); line-height: 1.7; }
+
+        .cta-section { padding: 120px 64px; text-align: center; border-top: 1px solid var(--border); }
+
+        .cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 5vw, 72px); font-weight: 300; color: var(--cream); margin-bottom: 24px; }
+        .cta-title em { font-style: italic; color: var(--gold); }
+        .cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 48px; }
+
+        footer { border-top: 1px solid var(--border); padding: 32px 64px; display: flex; justify-content: space-between; align-items: center; }
+        .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .footer-copy { font-size: 12px; color: var(--muted); }
+
+        @media (max-width: 768px) {
+          nav { padding: 20px 24px; }
+          .hero { grid-template-columns: 1fr; }
+          .hero-left { padding: 120px 24px 60px; }
+          .hero-right { display: none; }
+          .features { padding: 80px 24px; }
+          .features-grid { grid-template-columns: 1fr; }
+          .cta-section { padding: 80px 24px; }
+          footer { padding: 24px; flex-direction: column; gap: 12px; text-align: center; }
         }
       `}</style>
 
-      <div className="page">
-        <div className="header">
-          <div className="eyebrow">AI Personal Shopper</div>
-          <div className="logo">AuraStyle</div>
-          <div className="tagline">Këshilla mode të personalizuara</div>
+      <nav>
+        <span className="nav-logo">AuraStyle</span>
+        <div className="nav-actions">
+          <Link href="/auth" className="nav-link">Hyr</Link>
+          <Link href="/auth" className="nav-cta">Fillo Falas</Link>
         </div>
+      </nav>
 
-        <div className="card">
-          <span className="label">Zgjidh rastin</span>
-          <div className="chips">
-            {['Casual', 'Formal', 'Natë', 'Dasëm', 'Verore', 'Minimale'].map(c => (
-              <button
-                key={c}
-                className={`chip ${input.includes(c) ? 'active' : ''}`}
-                onClick={() => setInput(prev => prev + (prev ? ', ' : '') + c)}
-                type="button"
-              >
-                {c}
-              </button>
-            ))}
+      <section className="hero">
+        <div className="hero-left">
+          <div className="hero-badge">AI Personal Shopper · Kosovë</div>
+          <h1 className="hero-title">Stili yt.<br /><em>Personaliteti</em><br />yt.</h1>
+          <p className="hero-sub">AuraStyle analizon preferencat e tua dhe gjeneron outfit-e të personalizuara, paleta ngjyrash dhe këshilla stili — në Shqip, Gegë dhe Anglisht.</p>
+          <div className="hero-actions">
+            <Link href="/auth" className="btn-primary">Fillo Tani</Link>
+            <Link href="#features" className="btn-ghost">Mëso më shumë →</Link>
           </div>
-
-          <span className="label">Përshkruaj detajet</span>
-          <form onSubmit={handleSubmit}>
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="p.sh. 24 vjeç, dal darkë të shtunën, preferoj ngjyra neutrale dhe stil të rehatshëm..."
-              disabled={loading}
-            />
-            <button
-              className="submit-btn"
-              type="submit"
-              disabled={loading || !input.trim()}
-            >
-              {loading ? 'Duke analizuar...' : 'Gjenero Outfitin'}
-            </button>
-          </form>
         </div>
-
-        {loading && (
-          <div className="loading-wrap">
-            <div className="spinner" />
-            <span className="loading-text">AI po kuron look-un tënd...</span>
-          </div>
-        )}
-
-        {error && !loading && (
-          <div className="error-card">
-            <div>
-              <div className="error-label">Gabim</div>
-              <div className="error-text">{error}</div>
+        <div className="hero-right">
+          <div className="hero-visual">
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div className="fashion-circles">
+                <div className="fc-ring fc-ring-1" />
+                <div className="fc-ring fc-ring-2" />
+                <div className="fc-ring fc-ring-3" />
+                <div className="fc-core" />
+              </div>
+              <div className="color-swatches">
+                {['#c9a96e','#d4c5b2','#8b7355','#2c2416','#e8d5b0'].map(c => (
+                  <div key={c} className="swatch" style={{ background: c }} />
+                ))}
+              </div>
             </div>
-            <button className="error-close" onClick={() => setError('')}>✕</button>
           </div>
-        )}
+        </div>
+      </section>
 
-        {response && !loading && (
-          <div className="response-card">
-            <div className="response-eyebrow">Sugjerimi yt</div>
-            <div className="response-text">{response}</div>
-            <button className="new-btn" onClick={() => { setResponse(''); setInput(''); }}>
-              <span>←</span> Kërkim i ri
-            </button>
-          </div>
-        )}
+      <div className="marquee-wrap">
+        <div className="marquee-track">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} style={{ display: 'flex' }}>
+              {['Casual', 'Formal', 'Dasëm', 'Minimale', 'Verore', 'Elegante', 'Streetwear'].map(t => (
+                <span key={t} className="marquee-item"><span>✦</span>{t}</span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
+
+      <section className="features" id="features">
+        <div className="section-label">Si funksionon</div>
+        <div className="features-grid">
+          {[
+            { n: '01', t: 'Përshkruaj stilin tënd', d: 'Trego rastin, moshën, preferencat dhe ne kujdesemi për pjesën tjetër.' },
+            { n: '02', t: 'AI gjeneron outfit-in', d: 'Gjeneron sugjerime të personalizuara me paleta ngjyrash dhe këshilla praktike.' },
+            { n: '03', t: 'Ruaj dhe krahaso', d: 'Koleksiono outfit-et e tua të preferuara dhe shiko historikun e këshillave.' },
+          ].map(f => (
+            <div key={f.n} className="feature-item">
+              <div className="feature-num">{f.n}</div>
+              <div className="feature-title">{f.t}</div>
+              <div className="feature-desc">{f.d}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="cta-section">
+        <h2 className="cta-title">Gati të ndryshosh<br /><em>stilin tënd?</em></h2>
+        <p className="cta-sub">I lirë. Pa kartë krediti. Fillo menjëherë.</p>
+        <Link href="/auth" className="btn-primary">Krijo Llogarinë</Link>
+      </section>
+
+      <footer>
+        <span className="footer-logo">AuraStyle</span>
+        <span className="footer-copy">© 2025 AuraStyle · Kosovë</span>
+      </footer>
     </>
   );
 }

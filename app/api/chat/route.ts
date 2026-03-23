@@ -1,38 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
+import { Groq } from 'groq-sdk';
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-    if (!message) {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
       return NextResponse.json(
-        { error: 'Mesazhi është i zbrazët' },
-        { status: 400 }
+        { error: 'Duhet të jeni i kyçur për të marrë këshilla stili.' },
+        { status: 401 }
       );
     }
 
-    const result = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      system: 'Je AuraStyle, një stilist personal AI. Jep sugjerime outfit-esh, paleta ngjyrash dhe këshilla stili. Përgjigju shkurt dhe qartë.',
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Duhet të jeni i kyçur për të marrë këshilla stili.' },
+        { status: 401 }
+      );
+    }
+
+    const { message } = await request.json();
+
+    const result = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
       messages: [
+        { 
+          role: 'system', 
+          content: 'Je AuraStyle, një stilist personal AI. Jep sugjerime outfit-esh, paleta ngjyrash dhe këshilla stili. Përgjigju shkurt dhe qartë.' 
+        },
         { role: 'user', content: message }
       ],
     });
 
-    const reply = result.content[0].type === 'text' ? result.content[0].text : '';
+    const reply = result.choices[0]?.message?.content || "";
     return NextResponse.json({ reply });
 
   } catch (error: any) {
-    console.error('API Error:', error);
-    return NextResponse.json(
-      { error: 'Gabim gjatë komunikimit me AI' },
-      { status: 500 }
-    );
+    console.error('Chat API Error:', error);
+    return NextResponse.json({ error: 'Gabim gjatë komunikimit me AuraStyle' }, { status: 500 });
   }
 }
