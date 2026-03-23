@@ -28,10 +28,10 @@ export default function LandingPage() {
         :root {
           --ink: #0d0d0d;
           --cream: #f5f0e8;
-          --gold: #c9a96e;
-          --gold-light: #e8d5b0;
+          --pistachio: #9DC183;
+          --pistachio-light: #A8D08D;
           --muted: #6b6560;
-          --border: rgba(201, 169, 110, 0.2);
+          --border: rgba(157, 193, 131, 0.2);
         }
 
         body {
@@ -80,12 +80,12 @@ export default function LandingPage() {
           letter-spacing: 0.12em;
           text-transform: uppercase;
           color: var(--ink);
-          background: var(--gold);
+          background: var(--pistachio);
           padding: 10px 24px;
           text-decoration: none;
           transition: all 0.2s ease;
         }
-        .nav-cta:hover { background: var(--gold-light); }
+        .nav-cta:hover { background: var(--pistachio-light); }
 
         .hero {
           position: relative;
@@ -109,10 +109,10 @@ export default function LandingPage() {
           font-size: 11px;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: var(--gold);
+          color: var(--pistachio);
           margin-bottom: 40px;
         }
-        .hero-badge::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+        .hero-badge::before { content: ''; width: 32px; height: 1px; background: var(--pistachio); }
 
         .hero-title {
           font-family: 'Cormorant Garamond', serif;
@@ -122,7 +122,7 @@ export default function LandingPage() {
           color: var(--cream);
           margin-bottom: 32px;
         }
-        .hero-title em { font-style: italic; color: var(--gold); }
+        .hero-title em { font-style: italic; color: var(--pistachio); }
 
         .hero-sub {
           font-size: 15px;
@@ -147,7 +147,7 @@ export default function LandingPage() {
           border: 1px solid var(--cream);
           transition: all 0.25s ease;
         }
-        .btn-primary:hover { background: var(--gold); border-color: var(--gold); }
+        .btn-primary:hover { background: var(--pistachio); border-color: var(--pistachio); }
 
         .btn-ghost {
           font-size: 12px;
@@ -173,16 +173,16 @@ export default function LandingPage() {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse at 60% 40%, rgba(201,169,110,0.12) 0%, transparent 60%);
+          background: radial-gradient(ellipse at 60% 40%, rgba(157,193,131,0.12) 0%, transparent 60%);
         }
 
         .fashion-circles { position: relative; width: 280px; height: 380px; }
 
         .fc-ring { position: absolute; border: 1px solid; border-radius: 50%; }
-        .fc-ring-1 { width: 280px; height: 280px; top: 50px; left: 0; border-color: rgba(201,169,110,0.15); }
-        .fc-ring-2 { width: 200px; height: 200px; top: 90px; left: 40px; border-color: rgba(201,169,110,0.25); }
-        .fc-ring-3 { width: 120px; height: 120px; top: 130px; left: 80px; border-color: rgba(201,169,110,0.4); animation: rotateSlow 12s linear infinite; }
-        .fc-core { position: absolute; width: 48px; height: 48px; top: 156px; left: 116px; background: var(--gold); border-radius: 50%; box-shadow: 0 0 40px rgba(201,169,110,0.5); }
+        .fc-ring-1 { width: 280px; height: 280px; top: 50px; left: 0; border-color: rgba(157,193,131,0.15); }
+        .fc-ring-2 { width: 200px; height: 200px; top: 90px; left: 40px; border-color: rgba(157,193,131,0.25); }
+        .fc-ring-3 { width: 120px; height: 120px; top: 130px; left: 80px; border-color: rgba(157,193,131,0.4); animation: rotateSlow 12s linear infinite; }
+        .fc-core { position: absolute; width: 48px; height: 48px; top: 156px; left: 116px; background: var(--pistachio); border-radius: 50%; box-shadow: 0 0 40px rgba(157,193,131,0.5); }
 
         @keyframes rotateSlow { to { transform: rotate(360deg); } }
 
@@ -197,7 +197,7 @@ export default function LandingPage() {
         }
         .marquee-track { display: flex; white-space: nowrap; animation: marquee 20s linear infinite; }
         .marquee-item { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding: 0 40px; }
-        .marquee-item span { color: var(--gold); margin-right: 40px; }
+        .marquee-item span { color: var(--pistachio); margin-right: 40px; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
         .features { padding: 120px 64px; }
@@ -206,7 +206,7 @@ export default function LandingPage() {
           font-size: 11px;
           letter-spacing: 0.25em;
           text-transform: uppercase;
-          color: var(--gold);
+          color: var(--pistachio);
           margin-bottom: 64px;
           display: flex;
           align-items: center;
@@ -226,7 +226,7 @@ export default function LandingPage() {
         .cta-section { padding: 120px 64px; text-align: center; border-top: 1px solid var(--border); }
 
         .cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 5vw, 72px); font-weight: 300; color: var(--cream); margin-bottom: 24px; }
-        .cta-title em { font-style: italic; color: var(--gold); }
+        .cta-title em { font-style: italic; color: var(--pistachio); }
         .cta-sub { font-size: 15px; color: var(--muted); margin-bottom: 48px; }
 
         footer { border-top: 1px solid var(--border); padding: 32px 64px; display: flex; justify-content: space-between; align-items: center; }
@@ -273,7 +273,7 @@ export default function LandingPage() {
                 <div className="fc-core" />
               </div>
               <div className="color-swatches">
-                {['#c9a96e','#d4c5b2','#8b7355','#2c2416','#e8d5b0'].map(c => (
+                {['#9DC183','#A8D08D','#7CB342','#2c2416','#D4E5C4'].map(c => (
                   <div key={c} className="swatch" style={{ background: c }} />
                 ))}
               </div>

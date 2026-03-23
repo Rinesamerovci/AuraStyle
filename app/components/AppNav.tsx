@@ -27,7 +27,7 @@ export default function AppNav() {
         .appnav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 200;
           background: rgba(13,13,13,0.92); backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(201,169,110,0.12);
+          border-bottom: 1px solid rgba(157,193,131,0.12);
           padding: 0 48px; height: 64px;
           display: flex; align-items: center; justify-content: space-between;
         }
@@ -35,12 +35,12 @@ export default function AppNav() {
         .appnav-links { display: flex; align-items: center; gap: 4px; }
         .appnav-link { font-family: 'DM Sans', sans-serif; font-size: 13px; color: #6b6560; text-decoration: none; padding: 6px 16px; transition: color 0.2s; position: relative; letter-spacing: 0.06em; }
         .appnav-link:hover { color: #f5f0e8; }
-        .appnav-link.active { color: #c9a96e; }
-        .appnav-link.active::after { content: ''; position: absolute; bottom: -22px; left: 16px; right: 16px; height: 1px; background: #c9a96e; }
+        .appnav-link.active { color: #9DC183; }
+        .appnav-link.active::after { content: ''; position: absolute; bottom: -22px; left: 16px; right: 16px; height: 1px; background: #9DC183; }
         .appnav-right { display: flex; align-items: center; gap: 20px; }
         .appnav-email { font-size: 12px; color: #3d3832; font-family: 'DM Sans', sans-serif; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .appnav-logout { font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6560; background: none; border: 1px solid rgba(201,169,110,0.2); padding: 7px 16px; cursor: pointer; transition: all 0.2s; }
-        .appnav-logout:hover { color: #c9a96e; border-color: rgba(201,169,110,0.5); }
+        .appnav-logout { font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6560; background: none; border: 1px solid rgba(157,193,131,0.2); padding: 7px 16px; cursor: pointer; transition: all 0.2s; }
+        .appnav-logout:hover { color: #9DC183; border-color: rgba(157,193,131,0.5); }
         @media (max-width: 768px) { .appnav { padding: 0 20px; } .appnav-links { display: none; } .appnav-email { display: none; } }
       `}</style>
       <nav className="appnav">

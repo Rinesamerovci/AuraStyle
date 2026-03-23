@@ -185,9 +185,9 @@ Bëj analizën direkte, specifike dhe me autoritet.`
 
         :root {
           --ink: #080808; --ink-2: #0f0e0c; --ink-3: #161411;
-          --cream: #f2ede4; --gold: #c8a96b; --gold-bright: #e2c48a;
-          --gold-dim: rgba(200,169,107,0.12); --muted: #5c5650; --muted-2: #3a3530;
-          --border: rgba(200,169,107,0.14); --border-bright: rgba(200,169,107,0.35);
+          --cream: #f2ede4; --pistachio: #9DC183; --pistachio-bright: #A8D08D;
+          --pistachio-dim: rgba(157,193,131,0.12); --muted: #5c5650; --muted-2: #3a3530;
+          --border: rgba(157,193,131,0.14); --border-bright: rgba(157,193,131,0.35);
         }
 
         body { background: var(--ink); color: var(--cream); font-family: 'Syne', sans-serif; min-height: 100vh; }
@@ -227,7 +227,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           font-weight: 600;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: var(--gold);
+          color: var(--pistachio);
           margin-bottom: 10px;
         }
 
@@ -239,7 +239,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           line-height: 1.2;
         }
 
-        .panel-title em { font-style: italic; color: var(--gold); }
+        .panel-title em { font-style: italic; color: var(--pistachio); }
 
         .panel-body { padding: 32px 36px; flex: 1; overflow-y: auto; }
 
@@ -269,7 +269,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           cursor: pointer; transition: all 0.18s; letter-spacing: 0.03em;
         }
         .occ-chip:hover { border-color: var(--border-bright); color: var(--cream); }
-        .occ-chip.on { background: var(--gold); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+        .occ-chip.on { background: var(--pistachio); border-color: var(--pistachio); color: var(--ink); font-weight: 600; }
 
         .lang-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
@@ -281,7 +281,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           cursor: pointer; transition: all 0.18s; text-align: center;
         }
         .lang-btn:hover { border-color: var(--border-bright); color: var(--cream); }
-        .lang-btn.on { background: var(--ink-3); border-color: var(--gold); color: var(--gold); }
+        .lang-btn.on { background: var(--ink-3); border-color: var(--pistachio); color: var(--pistachio); }
 
         .detail-input {
           width: 100%;
@@ -294,7 +294,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           outline: none; transition: border-color 0.2s; line-height: 1.7; border-radius: 0;
         }
         .detail-input::placeholder { color: var(--muted-2); }
-        .detail-input:focus { border-color: var(--gold); }
+        .detail-input:focus { border-color: var(--pistachio); }
         .detail-input:disabled { opacity: 0.5; }
 
         .char-row { display: flex; justify-content: flex-end; margin-top: 6px; }
@@ -308,7 +308,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         }
 
         .btn-generate {
-          width: 100%; padding: 16px; background: var(--gold); border: none;
+          width: 100%; padding: 16px; background: var(--pistachio); border: none;
           font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
           letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink);
           cursor: pointer; transition: all 0.2s;
@@ -327,11 +327,11 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           width: 100%; padding: 13px; background: transparent;
           border: 1px solid var(--border-bright);
           font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
-          letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold);
+          letter-spacing: 0.14em; text-transform: uppercase; color: var(--pistachio);
           cursor: pointer; transition: all 0.2s;
           display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .btn-new-idea:hover:not(:disabled) { background: var(--gold-dim); }
+        .btn-new-idea:hover:not(:disabled) { background: var(--pistachio-dim); }
         .btn-new-idea:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .btn-reset {
@@ -353,7 +353,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .empty-glyph {
           font-family: 'Playfair Display', serif;
           font-size: 80px; font-style: italic;
-          color: rgba(200,169,107,0.1); line-height: 1; user-select: none;
+          color: rgba(157,193,131,0.1); line-height: 1; user-select: none;
         }
 
         .empty-title { font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic; color: var(--muted); }
@@ -377,22 +377,22 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           position: relative; display: flex; align-items: center; gap: 8px;
         }
         .idea-tab:hover { color: var(--cream); }
-        .idea-tab.active { background: var(--ink); border-color: var(--border); color: var(--gold); border-bottom-color: var(--ink); margin-bottom: -1px; }
+        .idea-tab.active { background: var(--ink); border-color: var(--border); color: var(--pistachio); border-bottom-color: var(--ink); margin-bottom: -1px; }
 
         .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-        .idea-tab.active .tab-dot { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+        .idea-tab.active .tab-dot { background: var(--pistachio); box-shadow: 0 0 8px var(--pistachio); }
 
-        .tab-spinner { width: 10px; height: 10px; border: 1.5px solid rgba(200,169,107,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .tab-spinner { width: 10px; height: 10px; border: 1.5px solid rgba(157,193,131,0.3); border-top-color: var(--pistachio); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .compare-btn {
           font-family: 'Syne', sans-serif;
           font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
           padding: 10px 20px; background: transparent; border: 1px solid var(--border-bright);
-          color: var(--gold); cursor: pointer; transition: all 0.2s;
+          color: var(--pistachio); cursor: pointer; transition: all 0.2s;
           display: flex; align-items: center; gap: 8px; white-space: nowrap; margin-bottom: 1px;
         }
-        .compare-btn:hover:not(:disabled) { background: var(--gold-dim); }
+        .compare-btn:hover:not(:disabled) { background: var(--pistachio-dim); }
         .compare-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         /* IDEA CONTENT */
@@ -409,17 +409,17 @@ Bëj analizën direkte, specifike dhe me autoritet.`
 
         .loading-orbs { position: relative; width: 64px; height: 64px; }
         .orb { position: absolute; border: 1px solid; border-radius: 50%; }
-        .orb-1 { inset: 0; border-color: rgba(200,169,107,0.1); }
-        .orb-2 { inset: 10px; border-color: rgba(200,169,107,0.2); animation: spin 3s linear infinite; }
-        .orb-3 { inset: 20px; border-color: rgba(200,169,107,0.4); animation: spin 2s linear infinite reverse; }
-        .orb-dot { position: absolute; width: 8px; height: 8px; background: var(--gold); border-radius: 50%; top: 28px; left: 28px; box-shadow: 0 0 16px var(--gold); }
+        .orb-1 { inset: 0; border-color: rgba(157,193,131,0.1); }
+        .orb-2 { inset: 10px; border-color: rgba(157,193,131,0.2); animation: spin 3s linear infinite; }
+        .orb-3 { inset: 20px; border-color: rgba(157,193,131,0.4); animation: spin 2s linear infinite reverse; }
+        .orb-dot { position: absolute; width: 8px; height: 8px; background: var(--pistachio); border-radius: 50%; top: 28px; left: 28px; box-shadow: 0 0 16px var(--pistachio); }
 
         .loading-text { font-family: 'Playfair Display', serif; font-size: 18px; font-style: italic; color: var(--muted); }
 
         .idea-num-badge { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-        .badge-num { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 400; font-style: italic; color: rgba(200,169,107,0.2); line-height: 1; }
+        .badge-num { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 400; font-style: italic; color: rgba(157,193,131,0.2); line-height: 1; }
         .badge-line { width: 1px; height: 40px; background: var(--border); }
-        .badge-label { font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+        .badge-label { font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pistachio); }
 
         .idea-text { font-size: 15px; font-weight: 400; line-height: 2; color: #ccc8be; white-space: pre-wrap; max-width: 720px; }
         .idea-text strong { color: var(--cream); font-weight: 600; }
@@ -427,21 +427,21 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .idea-actions { display: flex; gap: 10px; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 
         .act-btn { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 11px 22px; cursor: pointer; transition: all 0.18s; border: 1px solid; display: flex; align-items: center; gap: 8px; }
-        .act-save { background: var(--gold); border-color: var(--gold); color: var(--ink); }
-        .act-save:hover:not(:disabled) { background: var(--gold-bright); }
+        .act-save { background: var(--pistachio); border-color: var(--pistachio); color: var(--ink); }
+        .act-save:hover:not(:disabled) { background: var(--pistachio-bright); }
         .act-save:disabled { opacity: 0.5; cursor: not-allowed; }
-        .act-saved { background: transparent; border-color: rgba(200,169,107,0.2); color: var(--gold); cursor: default; }
+        .act-saved { background: transparent; border-color: rgba(157,193,131,0.2); color: var(--pistachio); cursor: default; }
         .act-ghost { background: transparent; border-color: var(--border); color: var(--muted); }
         .act-ghost:hover { border-color: var(--border-bright); color: var(--cream); }
 
         /* COMPARISON */
-        .comparison-wrap { border-top: 2px solid var(--gold); background: var(--ink-2); padding: 48px; animation: fadeSlide 0.5s ease forwards; }
+        .comparison-wrap { border-top: 2px solid var(--pistachio); background: var(--ink-2); padding: 48px; animation: fadeSlide 0.5s ease forwards; }
 
         .comp-header { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
         .comp-crown { font-size: 28px; }
         .comp-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; font-style: italic; color: var(--cream); }
-        .comp-title em { color: var(--gold); }
-        .comp-badge { margin-left: auto; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--border-bright); padding: 6px 14px; }
+        .comp-title em { color: var(--pistachio); }
+        .comp-badge { margin-left: auto; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--pistachio); border: 1px solid var(--border-bright); padding: 6px 14px; }
 
         .comp-text { font-size: 15px; font-weight: 400; line-height: 1.95; color: #ccc8be; white-space: pre-wrap; max-width: 720px; }
 
@@ -453,7 +453,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .comparing-label { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; color: var(--muted); }
 
         .sp { width: 14px; height: 14px; border: 1.5px solid rgba(0,0,0,0.2); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.7s linear infinite; }
-        .sp-gold { border: 1.5px solid rgba(200,169,107,0.2); border-top-color: var(--gold); }
+        .sp-gold { border: 1.5px solid rgba(157,193,131,0.2); border-top-color: var(--pistachio); }
 
         @media (max-width: 960px) {
           .page-wrap { grid-template-columns: 1fr; }
