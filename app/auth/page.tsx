@@ -3,17 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/auth-context'
+import AuthForm from '@/app/components/AuthForm'
 import Link from 'next/link'
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showPass, setShowPass] = useState(false)
   const { signUp, signIn, user } = useAuth()
   const router = useRouter()
 
@@ -21,24 +18,15 @@ export default function AuthPage() {
     if (user) router.push('/dashboard')
   }, [user, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (email: string, password: string, name?: string) => {
     setError('')
     setSuccess('')
-    if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
-    if (password.length < 6) { setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere.'); return }
-    if (mode === 'signup' && !name.trim()) { setError('Emri është i detyrueshëm.'); return }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    if (!emailRegex.test(email)) { setError('Shkruaj një email të vlefshëm.'); return }
     setLoading(true)
     try {
-      if (mode === 'signup') {
+      if (mode === 'signup' && name) {
         await signUp(email, password, name)
         setSuccess('Llogara u krijua! Kontrolloni emailin për të konfirmuar. Pastaj mund të hysh.')
         setMode('signin')
-        setEmail('')
-        setPassword('')
-        setName('')
       } else {
         await signIn(email, password)
         router.push('/dashboard')
@@ -165,30 +153,14 @@ export default function AuthPage() {
               <button className={`auth-tab ${mode === 'signin' ? 'active' : ''}`} onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}>Hyr</button>
               <button className={`auth-tab ${mode === 'signup' ? 'active' : ''}`} onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>Regjistrohu</button>
             </div>
-            <form onSubmit={handleSubmit}>
-              {mode === 'signup' && (
-                <div className="field-group">
-                  <label className="field-label">Emri</label>
-                  <input type="text" placeholder="Emri yt" value={name} onChange={e => setName(e.target.value)} className="field-input" disabled={loading} />
-                </div>
-              )}
-              <div className="field-group">
-                <label className="field-label">Email</label>
-                <input type="email" placeholder="email@shembull.com" value={email} onChange={e => setEmail(e.target.value)} pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" className="field-input" disabled={loading} required />
-              </div>
-              <div className="field-group">
-                <label className="field-label">Fjalëkalimi</label>
-                <div className="field-wrap">
-                  <input type={showPass ? 'text' : 'password'} placeholder="Min. 6 karaktere" value={password} onChange={e => setPassword(e.target.value)} className="field-input has-toggle" disabled={loading} required />
-                  <button type="button" className="toggle-pass" onClick={() => setShowPass(!showPass)} tabIndex={-1}>{showPass ? '🙈' : '👁'}</button>
-                </div>
-              </div>
-              {error && <div className="alert error"><span>⚠</span><span>{error}</span></div>}
-              {success && <div className="alert success"><span>✓</span><span>{success}</span></div>}
-              <button type="submit" className="submit-btn" disabled={loading}>
-                {loading ? <><div className="spinner-sm" /> Duke procesuar...</> : mode === 'signin' ? 'Hyr në Llogari' : 'Krijo Llogarinë'}
-              </button>
-            </form>
+            <AuthForm 
+              mode={mode} 
+              onSubmit={handleSubmit}
+              loading={loading}
+              error={error}
+              setError={setError}
+            />
+            {success && <div className="alert success"><span>✓</span><span>{success}</span></div>}
             <div className="divider"><div className="divider-line" /><span className="divider-text">ose</span><div className="divider-line" /></div>
             <div className="switch-mode">
               {mode === 'signin' ? <>Nuk ke llogari? <button className="switch-link" onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}>Regjistrohu</button></> : <>Ke llogari? <button className="switch-link" onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}>Hyr</button></>}
