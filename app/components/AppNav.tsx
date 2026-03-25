@@ -10,8 +10,13 @@ export default function AppNav() {
   const pathname = usePathname()
 
   const handleLogout = async () => {
-    await signOut()
-    router.push('/')
+    try {
+      await signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+      router.push('/')
+    }
   }
 
   const navItems = [
@@ -51,8 +56,12 @@ export default function AppNav() {
           ))}
         </div>
         <div className="appnav-right">
-          <span className="appnav-email">{user?.email}</span>
-          <button className="appnav-logout" onClick={handleLogout}>Dil</button>
+          {user && (
+            <>
+              <span className="appnav-email">{user.email}</span>
+              <button className="appnav-logout" onClick={handleLogout}>Dil</button>
+            </>
+          )}
         </div>
       </nav>
     </>

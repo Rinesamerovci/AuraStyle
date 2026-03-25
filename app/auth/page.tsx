@@ -28,12 +28,15 @@ export default function AuthPage() {
     if (!email || !password) { setError('Plotëso të gjitha fushat.'); return }
     if (password.length < 6) { setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere.'); return }
     if (mode === 'signup' && !name.trim()) { setError('Emri është i detyrueshëm.'); return }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailRegex.test(email)) { setError('Shkruaj një email të vlefshëm.'); return }
     setLoading(true)
     try {
       if (mode === 'signup') {
         await signUp(email, password, name)
         setSuccess('Llogara u krijua! Kontrolloni emailin për të konfirmuar. Pastaj mund të hysh.')
         setMode('signin')
+        setEmail('')
         setPassword('')
         setName('')
       } else {
@@ -171,7 +174,7 @@ export default function AuthPage() {
               )}
               <div className="field-group">
                 <label className="field-label">Email</label>
-                <input type="email" placeholder="email@shembull.com" value={email} onChange={e => setEmail(e.target.value)} className="field-input" disabled={loading} required />
+                <input type="email" placeholder="email@shembull.com" value={email} onChange={e => setEmail(e.target.value)} pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" className="field-input" disabled={loading} required />
               </div>
               <div className="field-group">
                 <label className="field-label">Fjalëkalimi</label>
