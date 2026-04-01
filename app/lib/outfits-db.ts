@@ -61,7 +61,7 @@ export async function getOutfits(): Promise<OutfitRecord[]> {
     .from('outfit_recommendations')
     .select('*')
     .eq('user_id', session.user.id)
-    .order('saved_at', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) throw new Error(`Failed to fetch outfits: ${error.message}`)
   return (data || []) as OutfitRecord[]
@@ -72,7 +72,7 @@ export async function getOutfits(): Promise<OutfitRecord[]> {
  */
 export async function updateOutfit(
   id: string,
-  updates: Partial<Omit<OutfitRecord, 'id' | 'user_id' | 'saved_at'>>
+  updates: Partial<Omit<OutfitRecord, 'id' | 'user_id' | 'created_at'>>
 ) {
   const supabase = getSupabase()
 
