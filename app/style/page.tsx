@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { sendChatMessage } from '@/app/lib/chat-client'
+import { createOutfit } from '@/app/lib/outfits-db'
 import AppNav from '@/app/components/AppNav'
 
 const OCCASIONS = ['Casual', 'Formal', 'Natë', 'Dasëm', 'Verore', 'Minimale', 'Punë', 'Sportive', 'Romantike', 'Udhëtim']
@@ -152,16 +153,21 @@ Bëj analizën direkte, specifike dhe me autoritet.`
     }
   }
 
-  const handleSave = (idea: Idea) => {
+  const handleSave = async (idea: Idea) => {
     if (!user) return
-    const key = `aurastyle_outfits_${user.id}`
-    const existing: SavedOutfit[] = JSON.parse(localStorage.getItem(key) || '[]')
-    const newOutfit: SavedOutfit = {
-      id: Date.now().toString(), prompt: details, response: idea.text,
-      occasion: selectedOccasions, language, savedAt: new Date().toISOString(),
+    try {
+      setError('')
+      await createOutfit({
+        prompt: details,
+        response: idea.text,
+        occasion: selectedOccasions,
+        language,
+      })
+      setSavedIds(prev => new Set([...prev, idea.id]))
+    } catch (err) {
+      console.error('Failed to save outfit:', err)
+      setError('Dështoi ruajtje e outfit-it. Provoni përsëri.')
     }
-    localStorage.setItem(key, JSON.stringify([newOutfit, ...existing]))
-    setSavedIds(prev => new Set([...prev, idea.id]))
   }
 
   const handleReset = () => {
