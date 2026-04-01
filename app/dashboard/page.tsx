@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 
+export const dynamic = 'force-dynamic'
+
 const STYLE_TIPS = [
   'Kombino ngjyra neutrale me një akçent të fortë.',
   'Textura e ndryshme e veshjeve krijon thellësi vizuale.',

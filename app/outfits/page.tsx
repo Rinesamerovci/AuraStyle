@@ -6,6 +6,8 @@ import { getOutfits, deleteOutfit as dbDeleteOutfit, updateOutfit, OutfitRecord 
 import AppNav from '@/app/components/AppNav';
 import { useRouter } from 'next/navigation';
 
+export const dynamic = 'force-dynamic'
+
 export default function OutfitsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();

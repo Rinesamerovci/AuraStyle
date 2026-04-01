@@ -7,6 +7,8 @@ import { sendChatMessage } from '@/app/lib/chat-client'
 import { createOutfit } from '@/app/lib/outfits-db'
 import AppNav from '@/app/components/AppNav'
 
+export const dynamic = 'force-dynamic'
+
 const OCCASIONS = ['Casual', 'Formal', 'Natë', 'Dasëm', 'Verore', 'Minimale', 'Punë', 'Sportive', 'Romantike', 'Udhëtim']
 const LANGUAGES = [{ key: 'shqip', label: 'Shqip' }, { key: 'gheg', label: 'Gegë' }, { key: 'english', label: 'EN' }]
 

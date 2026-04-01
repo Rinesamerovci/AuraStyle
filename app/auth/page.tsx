@@ -6,6 +6,8 @@ import { useAuth } from '@/app/lib/auth-context'
 import AuthForm from '@/app/components/AuthForm'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [error, setError] = useState('')
