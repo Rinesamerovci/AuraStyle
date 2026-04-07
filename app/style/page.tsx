@@ -18,9 +18,9 @@ interface Idea {
   loading: boolean
 }
 
-interface SavedOutfit {
-  id: string; prompt: string; response: string;
-  occasion: string[]; language: string; savedAt: string;
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message
+  return fallback
 }
 
 export default function StylePage() {
@@ -116,8 +116,8 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       } else {
         setIdeas([{ id: 1, text: reply, loading: false }])
       }
-    } catch (err: any) {
-      setError(err.message || 'Gabim gjatë komunikimit me AI.')
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, 'Gabim gjatë komunikimit me AI.'))
       if (isNew) {
         setIdeas(prev => prev.filter(i => i.id !== newId))
         setActiveIdea(Math.max(0, ideas.length - 1))
@@ -137,14 +137,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       const result = await sendChatMessage(prompt)
       setComparisonResult(result)
       setShowComparison(true)
-    } catch (err: any) {
+    } catch {
       setError('Gabim gjatë krahasimit.')
     } finally {
       setComparing(false)
     }
   }
 
-  const regenSingle = async (ideaId: number, idx: number) => {
+  const regenSingle = async (ideaId: number) => {
     setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, loading: true, text: '' } : i))
     setShowComparison(false)
     try {
@@ -557,7 +557,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
               <div className="empty-glyph">A</div>
               <p className="empty-title">Stili yt fillon këtu</p>
               <p className="empty-hint">
-                Zgjidh rastin, shto detaje dhe le AI të gjenerojë deri në 3 ide të ndryshme për t'i krahasuar.
+                Zgjidh rastin, shto detaje dhe le AI të gjenerojë deri në 3 ide të ndryshme për t&apos;i krahasuar.
               </p>
             </div>
           )}
@@ -624,7 +624,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                         </button>
                       )}
                       <button className="act-btn act-ghost"
-                        onClick={() => regenSingle(ideas[activeIdea].id, activeIdea)}
+                        onClick={() => regenSingle(ideas[activeIdea].id)}
                         disabled={anyLoading}>
                         ↺ Rigjeneroj këtë
                       </button>

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import type { User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 
 type AuthContextType = {
   user: User | null
@@ -14,57 +14,71 @@ type AuthContextType = {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const hasSupabaseEnv = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+let browserSupabase: SupabaseClient | null = null
+
+function getSupabaseClient() {
+  if (!hasSupabaseEnv) return null
+
+  if (!browserSupabase) {
+    browserSupabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+
+  return browserSupabase
+}
+
+function buildUserProfile(user: User | null) {
+  if (!user) return null
+
+  return {
+    name: user.user_metadata?.name || user.user_metadata?.full_name || '',
+    email: user.email || '',
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(hasSupabaseEnv)
   const [userProfile, setUserProfile] = useState<{ name?: string; email?: string } | null>(null)
-
-  // Only create Supabase client if we have environment variables
-  const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ? createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-    : null
+  const supabase = getSupabaseClient()
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
+    if (!supabase) return
+
+    let isMounted = true
 
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!isMounted) return
+
       setUser(session?.user ?? null)
-      if (session?.user) {
-        setUserProfile({
-          name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || '',
-          email: session.user.email || '',
-        })
-      }
+      setUserProfile(buildUserProfile(session?.user ?? null))
       setLoading(false)
     }
 
-    getSession()
+    void getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        setUserProfile({
-          name: session.user.user_metadata?.name || session.user.user_metadata?.full_name || '',
-          email: session.user.email || '',
-        })
-      } else {
-        setUserProfile(null)
-      }
+      setUserProfile(buildUserProfile(session?.user ?? null))
+      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [supabase])
 
   const signUp = async (email: string, password: string, name?: string) => {
     if (!supabase) throw new Error('Supabase not initialized')
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -75,17 +89,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     })
+
     if (error) throw error
   }
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase not initialized')
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
 
   const signOut = async () => {
     if (!supabase) throw new Error('Supabase not initialized')
+
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }

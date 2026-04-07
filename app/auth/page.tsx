@@ -33,8 +33,8 @@ export default function AuthPage() {
         await signIn(email, password)
         router.push('/dashboard')
       }
-    } catch (err: any) {
-      const msg = err.message || ''
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : ''
       if (msg.includes('Invalid login')) setError('Email ose fjalëkalim i gabim.')
       else if (msg.includes('already registered')) setError('Ky email është i regjistruar. Hyr.')
       else if (msg.includes('Email not confirmed')) setError('Konfirmo emailin para se të hysh.')

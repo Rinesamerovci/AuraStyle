@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
+import { getOutfits } from '@/app/lib/outfits-db'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
@@ -12,32 +13,48 @@ const STYLE_TIPS = [
   'Kombino ngjyra neutrale me një akçent të fortë.',
   'Textura e ndryshme e veshjeve krijon thellësi vizuale.',
   'Aksesori i duhur transformon çdo outfit.',
-  'Fit-i është gjithçka — madhësia e saktë ndikon shumë.',
+  'Fit-i është gjithçka - madhësia e saktë ndikon shumë.',
   'Ngjyrat e tokës i shkojnë shumicës së tiplozave.',
 ]
+
+function getGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 12) return 'Mirëmëngjes'
+  if (hour < 18) return 'Mirëdita'
+  return 'Mirëmbrëma'
+}
 
 export default function DashboardPage() {
   const { user, loading, userProfile } = useAuth()
   const router = useRouter()
   const [tip] = useState(() => STYLE_TIPS[Math.floor(Math.random() * STYLE_TIPS.length)])
   const [outfitCount, setOutfitCount] = useState(0)
-  const [greeting, setGreeting] = useState('')
+  const greeting = getGreeting()
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth')
   }, [user, loading, router])
 
   useEffect(() => {
-    const h = new Date().getHours()
-    if (h < 12) setGreeting('Mirëmëngjes')
-    else if (h < 18) setGreeting('Mirëdita')
-    else setGreeting('Mirëmbrëma')
-  }, [])
+    if (!user) return
 
-  useEffect(() => {
-    if (user) {
-      const saved = localStorage.getItem(`aurastyle_outfits_${user.id}`)
-      if (saved) { try { setOutfitCount(JSON.parse(saved).length) } catch {} }
+    let isMounted = true
+
+    const loadOutfitCount = async () => {
+      try {
+        const outfits = await getOutfits()
+        if (isMounted) setOutfitCount(outfits.length)
+      } catch (error) {
+        console.error('Failed to load outfit count:', error)
+        if (isMounted) setOutfitCount(0)
+      }
+    }
+
+    void loadOutfitCount()
+
+    return () => {
+      isMounted = false
     }
   }, [user])
 
@@ -114,7 +131,7 @@ export default function DashboardPage() {
           <Link href="/style" className="dash-cta-card">
             <div className="cta-label">Veprim kryesor</div>
             <div className="cta-title">Gjenero Outfit të Ri</div>
-            <div className="cta-desc">Trego rastin dhe preferencat — AI kujdeset për pjesën tjetër.</div>
+            <div className="cta-desc">Trego rastin dhe preferencat - AI kujdeset për pjesën tjetër.</div>
           </Link>
           <div className="dash-stat-card">
             <div className="stat-num">{outfitCount}</div>
@@ -124,7 +141,7 @@ export default function DashboardPage() {
             <div className="tip-icon">✦</div>
             <div>
               <div className="tip-label">Këshilla e ditës</div>
-              <div className="tip-text">"{tip}"</div>
+              <div className="tip-text">&quot;{tip}&quot;</div>
             </div>
           </div>
           <div className="dash-nav-row">
