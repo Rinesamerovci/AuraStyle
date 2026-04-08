@@ -5,6 +5,7 @@ import { useAuth } from '@/app/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { sendChatMessage } from '@/app/lib/chat-client'
 import { createOutfit } from '@/app/lib/outfits-db'
+import { useOffline } from '@/app/lib/use-offline'
 import AppNav from '@/app/components/AppNav'
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 export default function StylePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const isOffline = useOffline()
 
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
   const [language, setLanguage] = useState('shqip')
@@ -37,6 +39,7 @@ export default function StylePage() {
   const [showComparison, setShowComparison] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
   const [error, setError] = useState('')
+  const [lastFailedIdeaId, setLastFailedIdeaId] = useState<number | null>(null)
   const outputRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { if (!loading && !user) router.push('/auth') }, [user, loading, router])
@@ -116,8 +119,10 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       } else {
         setIdeas([{ id: 1, text: reply, loading: false }])
       }
+      setLastFailedIdeaId(null)
     } catch (error: unknown) {
       setError(getErrorMessage(error, 'Gabim gjatë komunikimit me AI.'))
+      setLastFailedIdeaId(newId)
       if (isNew) {
         setIdeas(prev => prev.filter(i => i.id !== newId))
         setActiveIdea(Math.max(0, ideas.length - 1))
@@ -457,6 +462,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .error-msg { font-size: 13px; color: #e07060; }
         .error-x { background: none; border: none; color: #e07060; cursor: pointer; font-size: 16px; }
 
+        .offline-banner { position: fixed; top: 64px; left: 0; right: 0; background: rgba(192, 57, 43, 0.15); border-bottom: 1px solid rgba(192, 57, 43, 0.4); padding: 10px 20px; text-align: center; font-size: 12px; color: #e07060; font-weight: 500; letter-spacing: 0.08em; z-index: 100; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+        .error-actions { display: flex; gap: 8px; }
+        .retry-btn { background: #e07060; color: white; border: none; padding: 4px 12px; font-size: 11px; cursor: pointer; transition: background 0.2s; font-weight: 600; }
+        .retry-btn:hover { background: #f08070; }
+        .error-x { padding: 4px 8px; }
+
         .comparing-overlay { padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 20px; border-top: 1px solid var(--border); background: var(--ink-2); }
         .comparing-label { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; color: var(--muted); }
 
@@ -474,7 +487,13 @@ Bëj analizën direkte, specifike dhe me autoritet.`
 
       <AppNav />
 
-      <div className="page-wrap">
+      {isOffline && (
+        <div className="offline-banner">
+          📡 Lidhja juaj me internetin u ndërpre. Disa funksionalitete mund të mos punojnë.
+        </div>
+      )}
+
+      <div className="page-wrap" style={isOffline ? { marginTop: '40px' } : {}}>
 
         {/* ─── LEFT: INPUT PANEL ─── */}
         <aside className="input-panel">
@@ -587,7 +606,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
               {error && (
                 <div className="error-bar">
                   <span className="error-msg">⚠ {error}</span>
-                  <button className="error-x" onClick={() => setError('')}>✕</button>
+                  <div className="error-actions">
+                    {lastFailedIdeaId && (
+                      <button className="retry-btn" onClick={() => generateIdea(ideas.length > 0)}>
+                        ↻ Provo Sërish
+                      </button>
+                    )}
+                    <button className="error-x" onClick={() => setError('')}>✕</button>
+                  </div>
                 </div>
               )}
 

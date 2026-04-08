@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/lib/auth-context'
 import AuthForm from '@/app/components/AuthForm'
+import { useOffline } from '@/app/lib/use-offline'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +16,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const { signUp, signIn, user } = useAuth()
   const router = useRouter()
+  const isOffline = useOffline()
 
   useEffect(() => {
     if (user) router.push('/dashboard')
@@ -56,6 +58,10 @@ export default function AuthPage() {
           --border: rgba(157,193,131,0.15);
         }
         body { background: var(--ink); color: var(--cream); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+        
+        .offline-banner { position: fixed; top: 0; left: 0; right: 0; background: rgba(192, 57, 43, 0.15); border-bottom: 1px solid rgba(192, 57, 43, 0.4); padding: 10px 20px; text-align: center; font-size: 12px; color: #e07060; font-weight: 500; letter-spacing: 0.08em; z-index: 1000; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
         .auth-layout { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
 
         .auth-left {
@@ -129,6 +135,12 @@ export default function AuthPage() {
           .auth-right { padding: 40px 24px; }
         }
       `}</style>
+
+      {isOffline && (
+        <div className="offline-banner">
+          📡 Lidhja juaj me internetin u ndërpre. Ju lutemi kontrolloni lidhjen tuaj.
+        </div>
+      )}
 
       <div className="auth-layout">
         <div className="auth-left">

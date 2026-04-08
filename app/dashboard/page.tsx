@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
 import { getOutfits } from '@/app/lib/outfits-db'
 import { useRouter } from 'next/navigation'
+import { useOffline } from '@/app/lib/use-offline'
 import Link from 'next/link'
 import AppNav from '@/app/components/AppNav'
 
@@ -28,6 +29,7 @@ function getGreeting() {
 export default function DashboardPage() {
   const { user, loading, userProfile } = useAuth()
   const router = useRouter()
+  const isOffline = useOffline()
   const [tip] = useState(() => STYLE_TIPS[Math.floor(Math.random() * STYLE_TIPS.length)])
   const [outfitCount, setOutfitCount] = useState(0)
   const greeting = getGreeting()
@@ -68,6 +70,9 @@ export default function DashboardPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root { --ink: #0d0d0d; --ink-2: #111009; --cream: #f5f0e8; --pistachio: #9DC183; --muted: #6b6560; --border: rgba(157,193,131,0.12); }
         body { background: var(--ink); color: var(--cream); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+        .offline-banner { position: fixed; top: 64px; left: 0; right: 0; background: rgba(192, 57, 43, 0.15); border-bottom: 1px solid rgba(192, 57, 43, 0.4); padding: 10px 20px; text-align: center; font-size: 12px; color: #e07060; font-weight: 500; letter-spacing: 0.08em; z-index: 100; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
         .dash-page { padding-top: 64px; min-height: 100vh; }
 
@@ -121,6 +126,11 @@ export default function DashboardPage() {
       `}</style>
 
       <AppNav />
+      {isOffline && (
+        <div className="offline-banner">
+          📡 Lidhja juaj me internetin u ndërpre. Disa funksionalitete mund të mos punojnë.
+        </div>
+      )}
       <div className="dash-page">
         <div className="dash-hero">
           <div className="dash-greeting">{greeting}</div>
