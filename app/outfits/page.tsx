@@ -16,6 +16,7 @@ export default function OutfitsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.push('/auth');
@@ -199,80 +200,102 @@ export default function OutfitsPage() {
 
         .outfits-grid {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
           gap: 24px;
         }
 
         .outfit-card {
           background: var(--ink-2);
           border: 1px solid var(--border);
-          padding: 32px 40px;
-          transition: border-color 0.2s, background 0.2s;
+          border-radius: 8px;
+          padding: 0;
+          transition: all 0.3s ease;
+          cursor: pointer;
           position: relative;
           overflow: hidden;
+          min-height: 200px;
         }
 
         .outfit-card:hover {
           border-color: var(--border-bright);
-          background: rgba(157,193,131,0.02);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
-        .outfit-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 3px;
-          height: 100%;
-          background: var(--pistachio);
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
-
-        .outfit-card:hover::before {
-          opacity: 0.6;
+        .outfit-card.expanded {
+          min-height: auto;
         }
 
         .outfit-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 24px;
-          margin-bottom: 24px;
-          padding-bottom: 24px;
+          padding: 24px;
           border-bottom: 1px solid var(--border);
+          background: linear-gradient(135deg, var(--ink-2) 0%, rgba(157,193,131,0.02) 100%);
         }
 
-        .outfit-info { flex: 1; }
-
-        .outfit-label {
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--pistachio);
-          margin-bottom: 8px;
-        }
-
-        .outfit-description {
+        .outfit-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 20px;
-          font-weight: 400;
+          font-size: 18px;
+          font-weight: 500;
           color: var(--cream);
+          line-height: 1.4;
+          margin-bottom: 8px;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .outfit-preview {
+          font-size: 13px;
+          color: var(--muted);
           line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .expand-indicator {
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+          width: 32px;
+          height: 32px;
+          background: var(--pistachio);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--ink);
+          font-size: 14px;
+          transition: transform 0.3s ease;
+        }
+
+        .outfit-card.expanded .expand-indicator {
+          transform: rotate(180deg);
+        }
+
+        .outfit-content {
+          padding: 24px;
+          display: none;
+        }
+
+        .outfit-card.expanded .outfit-content {
+          display: block;
         }
 
         .outfit-delete-btn {
-          flex-shrink: 0;
           background: transparent;
           border: 1px solid rgba(200, 50, 50, 0.3);
           color: rgba(200, 50, 50, 0.8);
-          padding: 10px 16px;
-          font-size: 12px;
+          padding: 8px 16px;
+          font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
           cursor: pointer;
           transition: all 0.2s;
           font-weight: 500;
+          border-radius: 4px;
         }
 
         .outfit-delete-btn:hover {
@@ -406,10 +429,12 @@ export default function OutfitsPage() {
         @media (max-width: 768px) {
           .outfits-hero { padding: 48px 24px 40px; }
           .outfits-body { padding: 40px 24px; }
-          .outfit-card { padding: 24px; }
-          .outfit-header { flex-direction: column; }
-          .outfit-delete-btn { width: 100%; text-align: center; }
-          .outfit-actions { justify-content: space-between; }
+          .outfits-grid { grid-template-columns: 1fr; }
+          .outfit-card { min-height: 160px; }
+          .outfit-header { padding: 20px; }
+          .outfit-content { padding: 20px; }
+          .outfit-title { font-size: 16px; }
+          .expand-indicator { width: 28px; height: 28px; font-size: 12px; }
         }
       `}</style>
 
@@ -437,60 +462,81 @@ export default function OutfitsPage() {
           ) : (
             <div className="outfits-grid">
               {outfits.map((outfit) => (
-                <div key={outfit.id} className="outfit-card">
+                <div 
+                  key={outfit.id} 
+                  className={`outfit-card ${expandedId === outfit.id ? 'expanded' : ''}`}
+                  onClick={() => setExpandedId(expandedId === outfit.id ? null : outfit.id)}
+                >
                   <div className="outfit-header">
-                    <div className="outfit-info">
-                      <div className="outfit-label">Outfit Description</div>
-                      <div className="outfit-description">{outfit.outfit_description}</div>
+                    <div>
+                      <div className="outfit-title">{outfit.outfit_description}</div>
+                      <div className="outfit-preview">
+                        {outfit.color_palette?.substring(0, 120)}...
+                      </div>
                     </div>
-                    <button onClick={() => deleteOutfit(outfit.id)} className="outfit-delete-btn">Delete</button>
+                    <div className="expand-indicator">↓</div>
                   </div>
 
-                  {editingId === outfit.id ? (
-                    <div className="outfit-content edit-box">
-                      <div className="palette-label">Color Palette</div>
-                      <textarea
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="edit-textarea"
-                        rows={4}
-                      />
-                      <div className="outfit-actions">
-                        <button onClick={() => saveEdit(outfit.id)} className="btn-base btn-save">Save Changes</button>
-                        <button onClick={() => setEditingId(null)} className="btn-base btn-cancel">Cancel</button>
+                  <div className="outfit-content">
+                    <div className="palette-label">Color Palette</div>
+                    {editingId === outfit.id ? (
+                      <div className="edit-box">
+                        <textarea
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="edit-textarea"
+                          rows={4}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="outfit-actions">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); saveEdit(outfit.id); }} 
+                            className="btn-base btn-save"
+                          >
+                            Save Changes
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setEditingId(null); }} 
+                            className="btn-base btn-cancel"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="outfit-content">
-                      <div className="palette-label">Color Palette</div>
-                      <div className="palette-text">{outfit.color_palette}</div>
-                      <div className="outfit-actions">
-                        <button
-                          onClick={() => {
-                            setEditingId(outfit.id);
-                            setEditValue(outfit.color_palette);
-                          }}
-                          className="btn-base btn-edit"
-                        >
-                          Edit
-                        </button>
+                    ) : (
+                      <div>
+                        <div className="palette-text">{outfit.color_palette}</div>
+                        <div className="outfit-actions">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingId(outfit.id); setEditValue(outfit.color_palette); }}
+                            className="btn-base btn-edit"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteOutfit(outfit.id); }} 
+                            className="outfit-delete-btn"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="outfit-meta">
-                    {outfit.style_tips && (
+                    <div className="outfit-meta">
+                      {outfit.style_tips && (
+                        <div className="meta-item">
+                          <span className="meta-label">Tips:</span> {outfit.style_tips}
+                        </div>
+                      )}
+                      {outfit.rating && (
+                        <div className="meta-item">
+                          <span className="meta-label">Rating:</span> {outfit.rating}/5
+                        </div>
+                      )}
                       <div className="meta-item">
-                        <span className="meta-label">Tips:</span> {outfit.style_tips}
+                        <span className="meta-label">Created:</span> {new Date(outfit.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                    )}
-                    {outfit.rating && (
-                      <div className="meta-item">
-                        <span className="meta-label">Rating:</span> {outfit.rating}/5
-                      </div>
-                    )}
-                    <div className="meta-item">
-                      <span className="meta-label">Created:</span> {new Date(outfit.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                   </div>
                 </div>
