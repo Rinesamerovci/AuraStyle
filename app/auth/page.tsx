@@ -14,6 +14,7 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const { signUp, signIn, user } = useAuth()
   const router = useRouter()
   const isOffline = useOffline()
@@ -23,9 +24,23 @@ export default function AuthPage() {
   }, [user, router])
 
   const handleSubmit = async (email: string, password: string, name?: string) => {
+    // Edge case: Prevent double submit
+    if (loading) {
+      setError('Kërkesa po procesohej. Prisni disa sekonda.')
+      return
+    }
+
+    // Edge case: Check offline
+    if (isOffline) {
+      setError('Nuk jeni i lidhur me internetin. Provo përsëri.')
+      return
+    }
+
     setError('')
     setSuccess('')
     setLoading(true)
+    setRetryCount(0)
+
     try {
       if (mode === 'signup' && name) {
         await signUp(email, password, name)
@@ -37,11 +52,25 @@ export default function AuthPage() {
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : ''
-      if (msg.includes('Invalid login')) setError('Email ose fjalëkalim i gabim.')
-      else if (msg.includes('already registered')) setError('Ky email është i regjistruar. Hyr.')
-      else if (msg.includes('Email not confirmed')) setError('Konfirmo emailin para se të hysh.')
-      else if (msg.includes('AuthRetryableError')) setError('Lidhje probleme. Provo sërish.')
-      else setError(msg || 'Diçka shkoi gabim.')
+      
+      // Edge case: Network error with retry suggestion
+      if (msg.includes('fetch') || msg.includes('network')) {
+        setError('Lidhje probleme. Kontrolloni internetin dhe provoni përsëri.')
+        setRetryCount(prev => prev + 1)
+      } else if (msg.includes('Invalid login')) {
+        setError('Email ose fjalëkalim i gabim.')
+      } else if (msg.includes('already registered')) {
+        setError('Ky email është i regjistruar. Hyr.')
+      } else if (msg.includes('Email not confirmed')) {
+        setError('Konfirmo emailin para se të hysh. Kontrolloni spamn ose kërkoni një link të ri.')
+      } else if (msg.includes('AuthRetryableError') || msg.includes('timeout')) {
+        setError('Lidhje probleme. Provo sërish.')
+        setRetryCount(prev => prev + 1)
+      } else if (msg.includes('User already exists')) {
+        setError('Ky email është zyrtar. Hyr nëse ke llogari.')
+      } else {
+        setError(msg || 'Diçka shkoi gabim. Provo përsëri.')
+      }
     } finally {
       setLoading(false)
     }

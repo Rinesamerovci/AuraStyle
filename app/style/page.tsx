@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { sendChatMessage } from '@/app/lib/chat-client'
+import { sendChatMessage, validateMessage, SessionExpiredError, NetworkError } from '@/app/lib/chat-client'
 import { createOutfit } from '@/app/lib/outfits-db'
 import { useOffline } from '@/app/lib/use-offline'
 import AppNav from '@/app/components/AppNav'
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const OCCASIONS = ['Casual', 'Formal', 'Natë', 'Dasëm', 'Verore', 'Minimale', 'Punë', 'Sportive', 'Romantike', 'Udhëtim']
 const LANGUAGES = [{ key: 'shqip', label: 'Shqip' }, { key: 'gheg', label: 'Gegë' }, { key: 'english', label: 'EN' }]
+const MAX_DETAILS_LENGTH = 5000
 
 interface Idea {
   id: number
@@ -19,13 +20,39 @@ interface Idea {
   loading: boolean
 }
 
+interface ErrorState {
+  message: string
+  type: 'error' | 'session' | 'network' | 'validation'
+  recoverable: boolean
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message
   return fallback
 }
 
+function parseErrorType(error: unknown): ErrorState {
+  if (error instanceof SessionExpiredError) {
+    return { message: error.message, type: 'session', recoverable: true }
+  }
+  if (error instanceof NetworkError) {
+    return { message: error.message, type: 'network', recoverable: true }
+  }
+  if (error instanceof Error && error.message.includes('bosh')) {
+    return { message: error.message, type: 'validation', recoverable: true }
+  }
+  if (error instanceof Error && error.message.includes('shumë i gjatë')) {
+    return { message: error.message, type: 'validation', recoverable: true }
+  }
+  return {
+    message: getErrorMessage(error, 'Diçka shkoi gabim. Provo përsëri.'),
+    type: 'error',
+    recoverable: true
+  }
+}
+
 export default function StylePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const router = useRouter()
   const isOffline = useOffline()
 
@@ -38,14 +65,27 @@ export default function StylePage() {
   const [comparisonResult, setComparisonResult] = useState('')
   const [showComparison, setShowComparison] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
-  const [error, setError] = useState('')
+  const [error, setError] = useState<ErrorState | null>(null)
   const [lastFailedIdeaId, setLastFailedIdeaId] = useState<number | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const outputRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { if (!loading && !user) router.push('/auth') }, [user, loading, router])
 
   const toggleOccasion = (o: string) => {
     setSelectedOccasions(prev => prev.includes(o) ? prev.filter(x => x !== o) : [...prev, o])
+  }
+
+  // Edge case: Validate input before submission
+  const canGenerate = () => {
+    if (isGenerating || isOffline) return false
+    if (!user) return false
+    if (!details.trim() && selectedOccasions.length === 0) {
+      setError({ message: 'Shkruaj të paktën diçka ose zgjidh një rast.', type: 'validation', recoverable: true })
+      return false
+    }
+    return true
   }
 
   const buildPrompt = (ideaNum: number) => {
@@ -91,9 +131,33 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   }
 
   const generateIdea = async (isNew = false) => {
-    if (!details.trim() && selectedOccasions.length === 0) return
-    setError('')
+    // Edge case: Prevent double submit
+    if (isGenerating) {
+      setError({ message: 'Kërkesa po procesohej. Prisni disa sekonda.', type: 'validation', recoverable: true })
+      return
+    }
+
+    // Edge case: Input validation
+    if (!details.trim() && selectedOccasions.length === 0) {
+      setError({ message: 'Shkruaj të paktën diçka ose zgjidh një rast.', type: 'validation', recoverable: true })
+      return
+    }
+
+    // Edge case: Check for excessively long input
+    if (details.length > MAX_DETAILS_LENGTH) {
+      setError({ message: `Detalet janë shumë të gjata. Maksimum ${MAX_DETAILS_LENGTH} karaktere.`, type: 'validation', recoverable: true })
+      return
+    }
+
+    // Edge case: Offline check
+    if (isOffline) {
+      setError({ message: 'Nuk jeni i lidhur me internetin. Provo përsëri.', type: 'network', recoverable: true })
+      return
+    }
+
+    setError(null)
     setShowComparison(false)
+    setIsGenerating(true)
 
     const newId = isNew ? ideas.length + 1 : 1
     const newIdea: Idea = { id: newId, text: '', loading: true }
@@ -121,49 +185,94 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       }
       setLastFailedIdeaId(null)
     } catch (error: unknown) {
-      setError(getErrorMessage(error, 'Gabim gjatë komunikimit me AI.'))
+      // Edge case: Handle session expiration
+      const errorState = parseErrorType(error)
+      setError(errorState)
       setLastFailedIdeaId(newId)
+
+      if (errorState.type === 'session') {
+        // Redirect to login after a delay
+        setTimeout(() => {
+          signOut()
+          router.push('/auth')
+        }, 2000)
+      }
+
       if (isNew) {
         setIdeas(prev => prev.filter(i => i.id !== newId))
         setActiveIdea(Math.max(0, ideas.length - 1))
       } else {
         setIdeas([])
       }
+    } finally {
+      setIsGenerating(false)
     }
   }
 
   const compareIdeas = async () => {
-    if (ideas.length < 2 || ideas.some(i => i.loading)) return
+    // Edge case: Prevent double submit
+    if (comparing || ideas.length < 2 || ideas.some(i => i.loading)) return
     setComparing(true)
     setShowComparison(false)
-    setError('')
+    setError(null)
     try {
+      // Edge case: Validate input
+      const maxIdea = ideas.reduce((max, idea) => idea.text.length > max ? idea.text.length : max, 0)
+      if (maxIdea > MAX_DETAILS_LENGTH * 2) {
+        throw new Error('Përmbajtja është shumë komplekse për krahasim. Provo me sugjerime më të shkurter.')
+      }
+
       const prompt = buildComparePrompt(ideas[0].text, ideas[1].text, ideas[2]?.text)
       const result = await sendChatMessage(prompt)
       setComparisonResult(result)
       setShowComparison(true)
-    } catch {
-      setError('Gabim gjatë krahasimit.')
+    } catch (error: unknown) {
+      const errorState = parseErrorType(error)
+      setError(errorState)
+
+      if (errorState.type === 'session') {
+        setTimeout(() => {
+          signOut()
+          router.push('/auth')
+        }, 2000)
+      }
     } finally {
       setComparing(false)
     }
   }
 
   const regenSingle = async (ideaId: number) => {
+    // Edge case: Prevent multiple regenerations
+    if (isGenerating) return
+    setIsGenerating(true)
+    setError(null)
     setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, loading: true, text: '' } : i))
     setShowComparison(false)
     try {
       const reply = await sendChatMessage(buildPrompt(ideaId))
       setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, text: reply, loading: false } : i))
-    } catch {
+    } catch (error: unknown) {
+      const errorState = parseErrorType(error)
+      setError(errorState)
       setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, loading: false } : i))
+
+      if (errorState.type === 'session') {
+        setTimeout(() => {
+          signOut()
+          router.push('/auth')
+        }, 2000)
+      }
+    } finally {
+      setIsGenerating(false)
     }
   }
 
   const handleSave = async (idea: Idea) => {
-    if (!user) return
+    // Edge case: Prevent multiple saves
+    if (!user || isSaving || savedIds.has(idea.id)) return
+    setIsSaving(true)
+    setError(null)
     try {
-      setError('')
       await createOutfit({
         prompt: details,
         response: idea.text,
@@ -171,16 +280,21 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         language,
       })
       setSavedIds(prev => new Set([...prev, idea.id]))
+      setError({ message: '✓ Outfit-i u ruajt me sukses!', type: 'error', recoverable: false })
+      setTimeout(() => setError(null), 3000)
     } catch (err) {
       console.error('Failed to save outfit:', err)
-      setError('Dështoi ruajtje e outfit-it. Provoni përsëri.')
+      const errorMsg = err instanceof Error ? err.message : 'Diçka shkoi gabim.'
+      setError({ message: `Dështoi ruajtje: ${errorMsg}`, type: 'error', recoverable: true })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleReset = () => {
     setIdeas([]); setDetails(''); setSelectedOccasions([])
-    setError(''); setShowComparison(false); setComparisonResult('')
-    setSavedIds(new Set()); setActiveIdea(0)
+    setError(null); setShowComparison(false); setComparisonResult('')
+    setSavedIds(new Set()); setActiveIdea(0); setIsGenerating(false)
   }
 
   const anyLoading = ideas.some(i => i.loading)
@@ -861,37 +975,103 @@ Bëj analizën direkte, specifike dhe me autoritet.`
 
         .error-bar { 
           margin: 0 48px; 
-          background: var(--error-light); 
-          border: 1px solid rgba(220, 53, 69, 0.3); 
           padding: 16px 24px; 
           display: flex; 
           justify-content: space-between; 
           align-items: center;
           border-radius: 8px;
-          border-left: 4px solid var(--error);
-          box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+          border-left: 4px solid;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          gap: 16px;
+          animation: slideInError 0.3s ease;
+        }
+
+        @keyframes slideInError { 
+          from { transform: translateY(-10px); opacity: 0; } 
+          to { transform: translateY(0); opacity: 1; } 
+        }
+
+        .error-bar-error {
+          background: rgba(220, 53, 69, 0.1);
+          border-color: #dc3545;
+        }
+
+        .error-bar-session {
+          background: rgba(255, 152, 0, 0.1);
+          border-color: #ff9800;
+        }
+
+        .error-bar-network {
+          background: rgba(33, 150, 243, 0.1);
+          border-color: #2196f3;
+        }
+
+        .error-bar-validation {
+          background: rgba(76, 175, 80, 0.1);
+          border-color: #4caf50;
         }
 
         .error-msg { 
           font-size: 14px; 
-          color: #ff6b7a;
           font-weight: 500;
+          flex: 1;
         }
+
+        .error-bar-error .error-msg { color: #ff6b7a; }
+        .error-bar-session .error-msg { color: #ffa500; }
+        .error-bar-network .error-msg { color: #42a5f5; }
+        .error-bar-validation .error-msg { color: #66bb6a; }
+
+        .error-actions {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .retry-btn, .logout-btn { 
+          background: none; 
+          border: 1px solid currentColor;
+          color: inherit;
+          cursor: pointer; 
+          font-size: 12px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+          font-weight: 500;
+          letter-spacing: 0.05em;
+        }
+
+        .error-bar-error .retry-btn { color: #ff6b7a; }
+        .error-bar-error .retry-btn:hover { background: rgba(255, 107, 122, 0.1); }
+
+        .error-bar-network .retry-btn { color: #42a5f5; }
+        .error-bar-network .retry-btn:hover { background: rgba(66, 165, 245, 0.1); }
+
+        .error-bar-session .logout-btn { color: #ffa500; }
+        .error-bar-session .logout-btn:hover { background: rgba(255, 165, 0, 0.1); }
 
         .error-x { 
           background: none; 
           border: none; 
-          color: #ff6b7a; 
           cursor: pointer; 
-          font-size: 18px;
-          padding: 4px;
+          font-size: 16px;
+          padding: 6px;
           border-radius: 4px;
           transition: all 0.2s ease;
+          flex-shrink: 0;
         }
 
-        .error-x:hover {
-          background: rgba(255, 107, 122, 0.1);
-        }
+        .error-bar-error .error-x { color: #ff6b7a; }
+        .error-bar-error .error-x:hover { background: rgba(255, 107, 122, 0.1); }
+
+        .error-bar-session .error-x { color: #ffa500; }
+        .error-bar-session .error-x:hover { background: rgba(255, 165, 0, 0.1); }
+
+        .error-bar-network .error-x { color: #42a5f5; }
+        .error-bar-network .error-x:hover { background: rgba(66, 165, 245, 0.1); }
+
+        .error-bar-validation .error-x { color: #66bb6a; }
+        .error-bar-validation .error-x:hover { background: rgba(102, 187, 106, 0.1); }
 
         .offline-banner { position: fixed; top: 64px; left: 0; right: 0; background: rgba(192, 57, 43, 0.15); border-bottom: 1px solid rgba(192, 57, 43, 0.4); padding: 10px 20px; text-align: center; font-size: 12px; color: #e07060; font-weight: 500; letter-spacing: 0.08em; z-index: 100; animation: slideDown 0.3s ease; }
         @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
@@ -977,8 +1157,8 @@ Bëj analizën direkte, specifike dhe me autoritet.`
           <div className="panel-footer">
             <button className="btn-generate"
               onClick={() => generateIdea(false)}
-              disabled={anyLoading || (!details.trim() && selectedOccasions.length === 0)}>
-              {anyLoading && ideas.length === 1 ? <><div className="sp" /> Duke gjeneruar...</>
+              disabled={isGenerating || anyLoading || (!details.trim() && selectedOccasions.length === 0)}>
+              {isGenerating && ideas.length === 1 ? <><div className="sp" /> Duke gjeneruar...</>
                 : ideas.length === 0 ? '✦ Gjenero Outfitin'
                 : '↺ Rikërkimi i ri'}
             </button>
@@ -986,9 +1166,9 @@ Bëj analizën direkte, specifike dhe me autoritet.`
             {hasIdeas && (
               <button className="btn-new-idea"
                 onClick={() => generateIdea(true)}
-                disabled={anyLoading || ideas.length >= 3}
+                disabled={isGenerating || anyLoading || ideas.length >= 3}
                 title={ideas.length >= 3 ? 'Maksimumi 3 ide' : ''}>
-                {anyLoading && ideas.length > 1
+                {(isGenerating || anyLoading) && ideas.length > 1
                   ? <><div className="sp sp-gold" /> Duke gjeneruar...</>
                   : <>+ Ide tjetër {ideas.length >= 3 ? '(max 3)' : `(${ideas.filter(i => !i.loading && i.text).length}/3)`}</>}
               </button>
@@ -1031,22 +1211,29 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                 </div>
 
                 {canCompare && (
-                  <button className="compare-btn" onClick={compareIdeas} disabled={comparing || anyLoading}>
+                  <button className="compare-btn" onClick={compareIdeas} disabled={comparing || anyLoading || isGenerating}>
                     {comparing ? <><div className="sp sp-gold" /> Duke krahasuar...</> : <>⚖ Krahaso Idetë</>}
                   </button>
                 )}
               </div>
 
               {error && (
-                <div className="error-bar">
-                  <span className="error-msg">⚠ {error}</span>
+                <div className={`error-bar error-bar-${error.type}`}>
+                  <span className="error-msg">
+                    {error.type === 'session' ? '🔒' : error.type === 'network' ? '📶' : error.type === 'validation' ? 'ℹ️' : '⚠'}
+                    {' '}{error.message}</span>
                   <div className="error-actions">
-                    {lastFailedIdeaId && (
+                    {error.recoverable && lastFailedIdeaId && error.type !== 'session' && (
                       <button className="retry-btn" onClick={() => generateIdea(ideas.length > 0)}>
                         ↻ Provo Sërish
                       </button>
                     )}
-                    <button className="error-x" onClick={() => setError('')}>✕</button>
+                    {error.type === 'session' && (
+                      <button className="logout-btn" onClick={() => { signOut(); router.push('/auth'); }}>
+                        Hyr Sërish
+                      </button>
+                    )}
+                    <button className="error-x" onClick={() => setError(null)}>✕</button>
                   </div>
                 </div>
               )}
@@ -1079,13 +1266,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                       {savedIds.has(ideas[activeIdea].id) ? (
                         <span className="act-btn act-saved">✓ Ruajtur</span>
                       ) : (
-                        <button className="act-btn act-save" onClick={() => handleSave(ideas[activeIdea])}>
-                          Ruaj këtë Outfit
+                        <button className="act-btn act-save" onClick={() => handleSave(ideas[activeIdea])}
+                          disabled={isSaving || isGenerating}>
+                          {isSaving ? '⏳ Po ruhet...' : 'Ruaj këtë Outfit'}
                         </button>
                       )}
                       <button className="act-btn act-ghost"
                         onClick={() => regenSingle(ideas[activeIdea].id)}
-                        disabled={anyLoading}>
+                        disabled={isGenerating || anyLoading}>
                         ↺ Rigjeneroj këtë
                       </button>
                     </div>
