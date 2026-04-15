@@ -14,7 +14,6 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
   const { signUp, signIn, user } = useAuth()
   const router = useRouter()
   const isOffline = useOffline()
@@ -39,7 +38,6 @@ export default function AuthPage() {
     setError('')
     setSuccess('')
     setLoading(true)
-    setRetryCount(0)
 
     try {
       if (mode === 'signup' && name) {
@@ -54,9 +52,10 @@ export default function AuthPage() {
       const msg = error instanceof Error ? error.message : ''
       
       // Edge case: Network error with retry suggestion
-      if (msg.includes('fetch') || msg.includes('network')) {
+      if (msg.includes('Supabase nuk po arrihet') || msg.includes('Supabase nuk u inicializua')) {
+        setError('Lidhja me Supabase deshtoi. Kontrollo `.env.local`, verifiko Project URL dhe Anon Key, pastaj rifillo `npm run dev`.')
+      } else if (msg.includes('fetch') || msg.includes('network')) {
         setError('Lidhje probleme. Kontrolloni internetin dhe provoni përsëri.')
-        setRetryCount(prev => prev + 1)
       } else if (msg.includes('Invalid login')) {
         setError('Email ose fjalëkalim i gabim.')
       } else if (msg.includes('already registered')) {
@@ -65,7 +64,6 @@ export default function AuthPage() {
         setError('Konfirmo emailin para se të hysh. Kontrolloni spamn ose kërkoni një link të ri.')
       } else if (msg.includes('AuthRetryableError') || msg.includes('timeout')) {
         setError('Lidhje probleme. Provo sërish.')
-        setRetryCount(prev => prev + 1)
       } else if (msg.includes('User already exists')) {
         setError('Ky email është zyrtar. Hyr nëse ke llogari.')
       } else {

@@ -3,6 +3,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
+import {
+  emptyStyleProfile,
+  normalizeStyleProfile,
+  type StyleProfile,
+  type UserProfile,
+} from '@/app/lib/style-profile'
 
 type AuthContextType = {
   user: User | null
@@ -10,7 +16,8 @@ type AuthContextType = {
   signUp: (email: string, password: string, name?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  userProfile: { name?: string; email?: string } | null
+  updateStyleProfile: (profile: StyleProfile) => Promise<void>
+  userProfile: UserProfile | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,19 +40,40 @@ function getSupabaseClient() {
   return browserSupabase
 }
 
+function getFriendlyAuthError(error: unknown) {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase()
+
+    if (
+      error instanceof TypeError ||
+      message.includes('failed to fetch') ||
+      message.includes('network')
+    ) {
+      return new Error(
+        "Supabase nuk po arrihet. Kontrollo `.env.local`, verifiko URL/key te Supabase, dhe rifillo `npm run dev` pasi t'i ndryshosh."
+      )
+    }
+
+    return error
+  }
+
+  return new Error('Dicka shkoi gabim gjate lidhjes me Supabase.')
+}
+
 function buildUserProfile(user: User | null) {
   if (!user) return null
 
   return {
-    name: user.user_metadata?.name || user.user_metadata?.full_name || '',
-    email: user.email || '',
+    name: String(user.user_metadata?.name || user.user_metadata?.full_name || ''),
+    email: String(user.email || ''),
+    styleProfile: normalizeStyleProfile(user.user_metadata?.style_profile ?? emptyStyleProfile),
   }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(hasSupabaseEnv)
-  const [userProfile, setUserProfile] = useState<{ name?: string; email?: string } | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const supabase = getSupabaseClient()
 
   useEffect(() => {
@@ -54,12 +82,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true
 
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!isMounted) return
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!isMounted) return
 
-      setUser(session?.user ?? null)
-      setUserProfile(buildUserProfile(session?.user ?? null))
-      setLoading(false)
+        setUser(session?.user ?? null)
+        setUserProfile(buildUserProfile(session?.user ?? null))
+      } catch (error) {
+        console.error('Supabase session check failed:', getFriendlyAuthError(error))
+        if (!isMounted) return
+
+        setUser(null)
+        setUserProfile(null)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
     }
 
     void getSession()
@@ -77,38 +116,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const signUp = async (email: string, password: string, name?: string) => {
-    if (!supabase) throw new Error('Supabase not initialized')
+    if (!supabase) throw new Error('Supabase nuk u inicializua. Kontrollo `.env.local` dhe rifillo serverin.')
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name || email.split('@')[0],
-          full_name: name || email.split('@')[0],
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || email.split('@')[0],
+            full_name: name || email.split('@')[0],
+          },
         },
-      },
-    })
+      })
 
-    if (error) throw error
+      if (error) throw error
+    } catch (error) {
+      throw getFriendlyAuthError(error)
+    }
   }
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error('Supabase not initialized')
+    if (!supabase) throw new Error('Supabase nuk u inicializua. Kontrollo `.env.local` dhe rifillo serverin.')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+    } catch (error) {
+      throw getFriendlyAuthError(error)
+    }
   }
 
   const signOut = async () => {
-    if (!supabase) throw new Error('Supabase not initialized')
+    if (!supabase) throw new Error('Supabase nuk u inicializua. Kontrollo `.env.local` dhe rifillo serverin.')
 
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+    } catch (error) {
+      throw getFriendlyAuthError(error)
+    }
+  }
+
+  const updateStyleProfile = async (profile: StyleProfile) => {
+    if (!supabase) throw new Error('Supabase nuk u inicializua. Kontrollo `.env.local` dhe rifillo serverin.')
+    if (!user) throw new Error('Duhet te jesh i kycur per te ruajtur profilin.')
+
+    try {
+      const nextProfile = normalizeStyleProfile(profile)
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          style_profile: nextProfile,
+        },
+      })
+
+      if (error) throw error
+
+      const nextUser = data.user ?? user
+      setUser(nextUser)
+      setUserProfile(buildUserProfile(nextUser))
+    } catch (error) {
+      throw getFriendlyAuthError(error)
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, userProfile }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, updateStyleProfile, userProfile }}>
       {children}
     </AuthContext.Provider>
   )

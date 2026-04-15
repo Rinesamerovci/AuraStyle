@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
               { role: 'user', content: message }
             ],
           }),
-          new Promise((_, reject) =>
+          new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Groq API timeout')), 25000)
           )
         ])

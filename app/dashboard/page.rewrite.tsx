@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
 import { getOutfits } from '@/app/lib/outfits-db'
 import { useRouter } from 'next/navigation'
@@ -29,14 +29,6 @@ function getGreeting() {
 function getTipForUser(seed: string) {
   const total = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0)
   return STYLE_TIPS[total % STYLE_TIPS.length]
-}
-
-function subscribeToGreeting() {
-  return () => {}
-}
-
-function getGreetingServerSnapshot() {
-  return 'Pershendetje'
 }
 
 export default function DashboardPage() {
@@ -71,11 +63,10 @@ export default function DashboardPage() {
     }
   }, [user])
 
-  const greeting = useSyncExternalStore(subscribeToGreeting, getGreeting, getGreetingServerSnapshot)
-
   if (loading || !user) return null
 
   const firstName = userProfile?.name || user.email?.split('@')[0] || 'Stilist'
+  const greeting = getGreeting()
   const tip = getTipForUser(user.id || user.email || firstName)
 
   return (
@@ -117,7 +108,7 @@ export default function DashboardPage() {
         .tip-label { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pistachio); margin-bottom: 8px; }
         .tip-text { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; font-style: italic; color: var(--cream); line-height: 1.4; }
 
-        .dash-nav-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; grid-column: span 3; }
+        .dash-nav-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; grid-column: span 3; }
         .dash-nav-card { background: var(--ink-2); border: 1px solid var(--border); padding: 32px 40px; text-decoration: none; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s, background 0.2s; }
         .dash-nav-card:hover { border-color: rgba(157,193,131,0.35); background: rgba(157,193,131,0.02); }
         .dnc-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
@@ -176,10 +167,6 @@ export default function DashboardPage() {
             </Link>
             <Link href="/outfits" className="dash-nav-card">
               <div><div className="dnc-label">Ruajtura</div><div className="dnc-title">Koleksioni im</div></div>
-              <div className="dnc-arrow">-&gt;</div>
-            </Link>
-            <Link href="/profile" className="dash-nav-card">
-              <div><div className="dnc-label">Personalizo</div><div className="dnc-title">Profili im</div></div>
               <div className="dnc-arrow">-&gt;</div>
             </Link>
           </div>

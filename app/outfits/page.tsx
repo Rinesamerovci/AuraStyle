@@ -8,6 +8,13 @@ import { useRouter } from 'next/navigation';
 
 export const dynamic = 'force-dynamic'
 
+const outfitDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
 export default function OutfitsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -535,7 +542,7 @@ export default function OutfitsPage() {
                         </div>
                       )}
                       <div className="meta-item">
-                        <span className="meta-label">Created:</span> {new Date(outfit.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <span className="meta-label">Created:</span> {outfitDateFormatter.format(new Date(outfit.created_at))}
                       </div>
                     </div>
                   </div>

@@ -63,15 +63,18 @@ export async function sendChatMessage(message: string, retryCount = 0): Promise<
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ message }),
-      signal: controller.signal,
-    })
+    const response = await timeoutPromise(
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      }),
+      TIMEOUT_MS + 1000
+    )
 
     clearTimeout(timeoutId)
 

@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/app/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { sendChatMessage, validateMessage, SessionExpiredError, NetworkError } from '@/app/lib/chat-client'
+import { sendChatMessage, SessionExpiredError, NetworkError } from '@/app/lib/chat-client'
 import { createOutfit } from '@/app/lib/outfits-db'
 import { useOffline } from '@/app/lib/use-offline'
 import AppNav from '@/app/components/AppNav'
+import { formatComparisonHtml, formatIdeaHtml } from '@/app/lib/ai-rich-text'
+import Link from 'next/link'
+import { buildStyleProfilePrompt, hasStyleProfile } from '@/app/lib/style-profile'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,9 +25,16 @@ interface Idea {
 
 interface ErrorState {
   message: string
-  type: 'error' | 'session' | 'network' | 'validation'
+  type: 'error' | 'session' | 'network' | 'validation' | 'success'
   recoverable: boolean
 }
+
+type RetryAction =
+  | { type: 'generate'; isNew: boolean }
+  | { type: 'regenerate'; ideaId: number }
+  | { type: 'compare' }
+  | { type: 'save'; ideaId: number }
+  | null
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message
@@ -52,7 +62,7 @@ function parseErrorType(error: unknown): ErrorState {
 }
 
 export default function StylePage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut, userProfile } = useAuth()
   const router = useRouter()
   const isOffline = useOffline()
 
@@ -66,7 +76,7 @@ export default function StylePage() {
   const [showComparison, setShowComparison] = useState(false)
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set())
   const [error, setError] = useState<ErrorState | null>(null)
-  const [lastFailedIdeaId, setLastFailedIdeaId] = useState<number | null>(null)
+  const [retryAction, setRetryAction] = useState<RetryAction>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const outputRef = useRef<HTMLDivElement>(null)
@@ -88,13 +98,21 @@ export default function StylePage() {
     return true
   }
 
+  const redirectToAuth = () => {
+    setTimeout(() => {
+      void signOut()
+      router.push('/auth')
+    }, 2000)
+  }
+
   const buildPrompt = (ideaNum: number) => {
+    const profileContext = userProfile ? buildStyleProfilePrompt(userProfile.styleProfile) : ''
     const occ = selectedOccasions.length ? `Rasti: ${selectedOccasions.join(', ')}. ` : ''
     const variation = ideaNum > 1
       ? `RËNDËSISHME: Ky është sugjerimi #${ideaNum}. Duhet të jetë KREJTËSISHT I NDRYSHËM nga sugjerimet e mëparshme — stil tjetër, ngjyra të tjera, qasje tjetër. `
       : ''
     const lang = language === 'english' ? 'Respond in English.' : language === 'gheg' ? 'Përgjigju në dialektin Gegë.' : 'Përgjigju në shqip standard.'
-    return `${occ}${variation}${details}. ${lang}
+    return `${profileContext}${occ}${variation}${details}. ${lang}
 
 Si AuraStyle stilist i luksit, gjenero një sugjerim outfit KOMPLET dhe DETAJUAR:
 
@@ -131,11 +149,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   }
 
   const generateIdea = async (isNew = false) => {
+    setRetryAction(null)
     // Edge case: Prevent double submit
     if (isGenerating) {
       setError({ message: 'Kërkesa po procesohej. Prisni disa sekonda.', type: 'validation', recoverable: true })
       return
     }
+
+    if (!canGenerate()) return
 
     // Edge case: Input validation
     if (!details.trim() && selectedOccasions.length === 0) {
@@ -183,19 +204,15 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       } else {
         setIdeas([{ id: 1, text: reply, loading: false }])
       }
-      setLastFailedIdeaId(null)
+      setRetryAction(null)
     } catch (error: unknown) {
       // Edge case: Handle session expiration
       const errorState = parseErrorType(error)
       setError(errorState)
-      setLastFailedIdeaId(newId)
+      setRetryAction({ type: 'generate', isNew })
 
       if (errorState.type === 'session') {
-        // Redirect to login after a delay
-        setTimeout(() => {
-          signOut()
-          router.push('/auth')
-        }, 2000)
+        redirectToAuth()
       }
 
       if (isNew) {
@@ -210,6 +227,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   }
 
   const compareIdeas = async () => {
+    setRetryAction(null)
     // Edge case: Prevent double submit
     if (comparing || ideas.length < 2 || ideas.some(i => i.loading)) return
     setComparing(true)
@@ -226,15 +244,14 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       const result = await sendChatMessage(prompt)
       setComparisonResult(result)
       setShowComparison(true)
+      setRetryAction(null)
     } catch (error: unknown) {
       const errorState = parseErrorType(error)
       setError(errorState)
+      setRetryAction({ type: 'compare' })
 
       if (errorState.type === 'session') {
-        setTimeout(() => {
-          signOut()
-          router.push('/auth')
-        }, 2000)
+        redirectToAuth()
       }
     } finally {
       setComparing(false)
@@ -242,6 +259,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   }
 
   const regenSingle = async (ideaId: number) => {
+    setRetryAction(null)
     // Edge case: Prevent multiple regenerations
     if (isGenerating) return
     setIsGenerating(true)
@@ -251,16 +269,15 @@ Bëj analizën direkte, specifike dhe me autoritet.`
     try {
       const reply = await sendChatMessage(buildPrompt(ideaId))
       setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, text: reply, loading: false } : i))
+      setRetryAction(null)
     } catch (error: unknown) {
       const errorState = parseErrorType(error)
       setError(errorState)
+      setRetryAction({ type: 'regenerate', ideaId })
       setIdeas(prev => prev.map(i => i.id === ideaId ? { ...i, loading: false } : i))
 
       if (errorState.type === 'session') {
-        setTimeout(() => {
-          signOut()
-          router.push('/auth')
-        }, 2000)
+        redirectToAuth()
       }
     } finally {
       setIsGenerating(false)
@@ -268,6 +285,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   }
 
   const handleSave = async (idea: Idea) => {
+    setRetryAction(null)
     // Edge case: Prevent multiple saves
     if (!user || isSaving || savedIds.has(idea.id)) return
     setIsSaving(true)
@@ -281,9 +299,11 @@ Bëj analizën direkte, specifike dhe me autoritet.`
       })
       setSavedIds(prev => new Set([...prev, idea.id]))
       setError({ message: '✓ Outfit-i u ruajt me sukses!', type: 'error', recoverable: false })
+      setError({ message: 'Outfit-i u ruajt me sukses!', type: 'validation', recoverable: false })
       setTimeout(() => setError(null), 3000)
     } catch (err) {
       console.error('Failed to save outfit:', err)
+      setRetryAction({ type: 'save', ideaId: idea.id })
       const errorMsg = err instanceof Error ? err.message : 'Diçka shkoi gabim.'
       setError({ message: `Dështoi ruajtje: ${errorMsg}`, type: 'error', recoverable: true })
     } finally {
@@ -294,12 +314,37 @@ Bëj analizën direkte, specifike dhe me autoritet.`
   const handleReset = () => {
     setIdeas([]); setDetails(''); setSelectedOccasions([])
     setError(null); setShowComparison(false); setComparisonResult('')
-    setSavedIds(new Set()); setActiveIdea(0); setIsGenerating(false)
+    setSavedIds(new Set()); setActiveIdea(0); setIsGenerating(false); setRetryAction(null)
+  }
+
+  const retryLastAction = () => {
+    if (!retryAction) return
+
+    if (retryAction.type === 'generate') {
+      void generateIdea(retryAction.isNew)
+      return
+    }
+
+    if (retryAction.type === 'regenerate') {
+      void regenSingle(retryAction.ideaId)
+      return
+    }
+
+    if (retryAction.type === 'compare') {
+      void compareIdeas()
+      return
+    }
+
+    const idea = ideas.find((item) => item.id === retryAction.ideaId)
+    if (idea) {
+      void handleSave(idea)
+    }
   }
 
   const anyLoading = ideas.some(i => i.loading)
   const canCompare = ideas.filter(i => !i.loading && i.text).length >= 2
   const hasIdeas = ideas.length > 0
+  const profileReady = Boolean(userProfile && hasStyleProfile(userProfile.styleProfile))
 
   if (loading || !user) return null
 
@@ -565,6 +610,36 @@ Bëj analizën direkte, specifike dhe me autoritet.`
 
         .char-row { display: flex; justify-content: flex-end; margin-top: 6px; }
         .char-count { font-size: 11px; color: var(--muted); }
+        .profile-note {
+          margin-top: 18px;
+          padding: 14px 16px;
+          border: 1px solid var(--border);
+          background: rgba(157,193,131,0.04);
+          border-radius: 8px;
+        }
+        .profile-note-title {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--pistachio);
+          margin-bottom: 8px;
+        }
+        .profile-note-copy {
+          font-size: 13px;
+          color: var(--muted);
+          line-height: 1.6;
+        }
+        .profile-note-link {
+          display: inline-block;
+          margin-top: 10px;
+          color: var(--cream);
+          text-decoration: none;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .profile-note-link:hover { color: var(--pistachio); }
 
         .panel-footer {
           padding: 32px 40px 40px;
@@ -972,6 +1047,9 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .comp-badge { margin-left: auto; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--pistachio); border: 1px solid var(--border-bright); padding: 6px 14px; }
 
         .comp-text { font-size: 15px; font-weight: 400; line-height: 1.95; color: #ccc8be; white-space: pre-wrap; max-width: 720px; }
+        .ai-rich-text__trophy { font-size: 18px; }
+        .ai-rich-text__positive { color: #5aaa7a; }
+        .ai-rich-text__negative { color: #c06050; }
 
         .error-bar { 
           margin: 0 48px; 
@@ -1076,11 +1154,6 @@ Bëj analizën direkte, specifike dhe me autoritet.`
         .offline-banner { position: fixed; top: 64px; left: 0; right: 0; background: rgba(192, 57, 43, 0.15); border-bottom: 1px solid rgba(192, 57, 43, 0.4); padding: 10px 20px; text-align: center; font-size: 12px; color: #e07060; font-weight: 500; letter-spacing: 0.08em; z-index: 100; animation: slideDown 0.3s ease; }
         @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
-        .error-actions { display: flex; gap: 8px; }
-        .retry-btn { background: #e07060; color: white; border: none; padding: 4px 12px; font-size: 11px; cursor: pointer; transition: background 0.2s; font-weight: 600; }
-        .retry-btn:hover { background: #f08070; }
-        .error-x { padding: 4px 8px; }
-
         .comparing-overlay { padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 20px; border-top: 1px solid var(--border); background: var(--ink-2); }
         .comparing-label { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; color: var(--muted); }
 
@@ -1151,6 +1224,17 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                 disabled={anyLoading} maxLength={400}
               />
               <div className="char-row"><span className="char-count">{details.length}/400</span></div>
+              <div className="profile-note">
+                <div className="profile-note-title">{profileReady ? 'Profile active' : 'Profile missing'}</div>
+                <div className="profile-note-copy">
+                  {profileReady
+                    ? 'AuraStyle is also using your saved age, gender, skin tone, undertone, fit preferences, and color notes for more precise outfit ideas.'
+                    : 'Add your personal profile once and future outfit suggestions will be more accurate without retyping everything every time.'}
+                </div>
+                <Link href="/profile" className="profile-note-link">
+                  {profileReady ? 'Edit profile' : 'Complete profile'}
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -1223,8 +1307,8 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                     {error.type === 'session' ? '🔒' : error.type === 'network' ? '📶' : error.type === 'validation' ? 'ℹ️' : '⚠'}
                     {' '}{error.message}</span>
                   <div className="error-actions">
-                    {error.recoverable && lastFailedIdeaId && error.type !== 'session' && (
-                      <button className="retry-btn" onClick={() => generateIdea(ideas.length > 0)}>
+                    {error.recoverable && retryAction && error.type !== 'session' && (
+                      <button className="retry-btn" onClick={retryLastAction}>
                         ↻ Provo Sërish
                       </button>
                     )}
@@ -1257,9 +1341,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                     </div>
                     <div className="idea-text"
                       dangerouslySetInnerHTML={{
-                        __html: ideas[activeIdea].text
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        __html: formatIdeaHtml(ideas[activeIdea].text)
                       }}
                     />
                     <div className="idea-actions">
@@ -1302,7 +1384,7 @@ Bëj analizën direkte, specifike dhe me autoritet.`
                   </div>
                   <div className="comp-text"
                     dangerouslySetInnerHTML={{
-                      __html: comparisonResult
+                      __html: formatComparisonHtml(comparisonResult)
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\*(.*?)\*/g, '<em>$1</em>')
                         .replace(/🏆/g, '<span style="font-size:18px">🏆</span>')

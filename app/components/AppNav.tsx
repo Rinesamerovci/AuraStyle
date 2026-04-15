@@ -21,6 +21,7 @@ export default function AppNav() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/profile', label: 'Profili' },
     { href: '/style', label: 'Gjenero Outfit' },
     { href: '/outfits', label: 'Koleksioni' },
   ]

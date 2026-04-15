@@ -1,5 +1,46 @@
 # AuraStyle
 
+AuraStyle is an AI fashion assistant that helps users generate outfit ideas, compare looks, and save favorite recommendations to a personal collection.
+
+## Quick Start
+
+- GitHub Repository: [https://github.com/Rinesamerovci/AuraStyle](https://github.com/Rinesamerovci/AuraStyle)
+- Live URL: [https://aurastyle-rinesa.vercel.app](https://aurastyle-rinesa.vercel.app)
+- Stack: Next.js, React, TypeScript, Supabase, Groq
+
+### Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+### Required `.env.local`
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+GROQ_API_KEY=your-groq-api-key
+```
+
+### Main Features
+
+- AI outfit generation in Albanian, Gheg, and English
+- Login and signup with Supabase Auth
+- Protected dashboard, style generator, and saved outfits pages
+- Save, review, edit, and delete outfit recommendations
+- Database-backed user-specific outfit history
+
+### Main Routes
+
+- `/` - landing page
+- `/auth` - authentication
+- `/dashboard` - user dashboard
+- `/style` - AI outfit generator
+- `/outfits` - saved outfits collection
+
 ## Repository
 
 **GitHub Repository:** [https://github.com/Rinesamerovci/AuraStyle](https://github.com/Rinesamerovci/AuraStyle)
