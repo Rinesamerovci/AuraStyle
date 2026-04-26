@@ -37,6 +37,10 @@ AuraStyle is an AI fashion assistant built for users who want fast, personalized
 5. User saves a favorite recommendation to Supabase
 6. User reviews, edits, or deletes saved outfits at `/outfits`
 
+## Why This Project Matters
+
+AuraStyle solves a simple but real problem: many users know the occasion they are dressing for, but do not know how to turn that into a clear outfit. The app reduces decision time and gives practical, personalized help instead of generic fashion advice.
+
 ## Routes
 
 - `/` - landing page
@@ -81,5 +85,7 @@ Before presenting, verify:
 - AI generation responds
 - saving to outfits works
 - the saved outfits page loads existing data
+- a prepared demo account is ready
+- one short demo prompt is prepared in advance
 
 If the live demo has network issues, use the plan in [docs/demo-plan.md](docs/demo-plan.md).

@@ -2,9 +2,9 @@
 
 ## 1. Cka eshte projekti dhe kujt i sherben
 
-AuraStyle eshte nje aplikacion web qe perdor AI per te gjeneruar ide veshjesh te personalizuara. Projekti u sherben perdoruesve qe duan ndihme te shpejte per te zgjedhur outfit-in e duhur sipas rastit, preferencave personale dhe gjuhes qe duan te perdorin.
+AuraStyle eshte nje aplikacion web me AI qe gjeneron ide veshjesh te personalizuara sipas rastit, preferences se stilit dhe gjuhes se perdoruesit. Projekti u sherben perdoruesve qe duan ndihme te shpejte dhe praktike per te zgjedhur outfit-in e duhur pa humbur kohe.
 
-Vlera kryesore e projektit eshte qe e ben procesin e zgjedhjes se veshjes me te shpejte, me te personalizuar dhe me me pak hezitim per perdoruesin.
+Projekti ka vlere sepse e kthen nje pyetje te perditshme, "cfare te vesh sot?", ne nje zgjidhje te qarte, te personalizuar dhe te ruajtshme per perdorim te ardhshem.
 
 ## 2. Live URL
 
@@ -13,77 +13,79 @@ Vlera kryesore e projektit eshte qe e ben procesin e zgjedhjes se veshjes me te 
 
 ## 3. Qellimi i prezantimit
 
-Ne demo do te tregoj qarte flow-n kryesor te aplikacionit:
+Qellimi i demos eshte te tregoj qarte flow-n kryesor te aplikacionit nga hyrja ne sistem deri te ruajtja e rezultatit ne database.
+
+Flow-i kryesor qe do te tregoj eshte:
 
 1. hyrja ne sistem
 2. gjenerimi i nje outfit-i me AI
 3. ruajtja e rekomandimit
 4. shfaqja e tij te koleksioni personal
 
-Ky eshte flow-i me i mire sepse tregon vleren e plote te projektit ne pak minuta dhe perfshin funksionalitetet kryesore qe profesori mund t'i vleresoje lehte.
+Ky flow eshte zgjedhur sepse demonstron ne menyre te shpejte dhe bindese vleren e produktit dhe funksionalitetet kryesore teknike.
 
 ## 4. Flow kryesor qe do ta demonstroj
 
-1. Hap faqen kryesore dhe shpjegoj shkurt se cfare ben AuraStyle.
+1. Hap faqen kryesore dhe shpjegoj me nje fjali se cfare ben AuraStyle.
 2. Kaloj te `/auth` dhe kycem me nje demo account te pergatitur paraprakisht.
-3. Hap `/dashboard` dhe tregoj qe perdoruesi ka qasje ne zonat kryesore te aplikacionit.
+3. Hap `/dashboard` dhe tregoj qe perdoruesi ka qasje te personalizuar ne funksionet kryesore.
 4. Kaloj te `/style`.
 5. Zgjedh nje rast, p.sh. `Formal`.
-6. Shkruaj nje prompt te shkurter, p.sh.:
+6. Shkruaj nje prompt te pergatitur paraprakisht:
    `Formal dinner, neutral colors, elegant but comfortable style.`
 7. Zgjedh gjuhen e pergjigjes.
 8. Gjeneroj nje ide veshjeje me AI.
 9. E ruaj rekomandimin.
-10. Hap `/outfits` dhe tregoj qe outfit-i i ruajtur shfaqet ne koleksion.
-11. Nese kam kohe, tregoj shkurt edhe `edit` ose `delete` per te deshmuar CRUD.
+10. Hap `/outfits` dhe tregoj qe outfit-i i ruajtur shfaqet ne koleksionin personal.
+11. Nese mbetet kohe, tregoj shkurt `edit` ose `delete` per te deshmuar CRUD functionality.
 
 ## 5. Plani i prezantimit 5-7 minuta
 
-### 0:00 - 0:45 Hyrja
+### 0:00 - 0:40 Hyrja
 
 - Prezantoj projektin me 1-2 fjali.
 - Them kujt i sherben.
-- E shpjegoj problemin: zgjedhja e veshjes shpesh merr kohe dhe nuk eshte gjithmone e lehte.
+- E formuloj problemin qe projekti zgjidh.
 
-### 0:45 - 1:30 Zgjidhja
+### 0:40 - 1:20 Zgjidhja dhe vlera
 
-- Shpjegoj qe AuraStyle perdor AI per te gjeneruar outfit-e te personalizuara.
+- Shpjegoj qe AuraStyle perdor AI per rekomandime te personalizuara.
 - Permend qe aplikacioni mbeshtet Shqip, Gege dhe Anglisht.
+- Theksoj vleren praktike: kursim kohe dhe ide me te qarta per veshje.
 
-### 1:30 - 4:45 Live demo
+### 1:20 - 4:50 Live demo
 
 - Landing page
 - Sign in
 - Dashboard
 - Style generator
-- Save outfit
+- Generate result
+- Save result
 - Outfits collection
 
-### 4:45 - 6:00 Pjesa teknike
+### 4:50 - 6:10 Pjesa teknike
 
-Shpjegoj shkurt:
+- autentikimi me Supabase
+- ruajtja e te dhenave ne Supabase
+- gjenerimi i rekomandimeve permes Next.js API route dhe Groq
+- mbrojtja e route-ve dhe session handling
 
-- autentikimin me Supabase
-- ruajtjen e te dhenave ne Supabase
-- gjenerimin e rekomandimeve permes Next.js API route dhe Groq
-- mbrojtjen e route-ve dhe session handling
+### 6:10 - 7:00 Mbyllja
 
-### 6:00 - 7:00 Mbyllja
-
-- Rikthej vleren e projektit
+- Rikthej shkurt vleren e projektit
 - Theksoj qe projekti eshte testuar dhe gati per prezantim
-- Permend qe projekti kombinon AI me ruajtje reale te te dhenave te perdoruesit
+- Permend qe aplikacioni kombinon AI, autentikim dhe ruajtje reale te te dhenave
 
 ## 6. Cilat pjese teknike do t'i shpjegoj shkurt
 
-Gjate prezantimit nuk do te futem ne detaje te panevojshme, por do te permend vetem pjeset kryesore:
+Gjate prezantimit do te shpjegoj vetem pjeset teknike me vlere me te larte:
 
 - `Next.js + React + TypeScript` per frontend dhe routing
 - `Supabase Auth` per sign up, sign in dhe session management
-- `Supabase PostgreSQL` per ruajtjen e outfit-eve te perdoruesit
+- `Supabase PostgreSQL` per ruajtjen e outfit-eve per secilin perdorues
 - `Groq API` per gjenerimin e ideve te veshjes me AI
-- profile page qe ndihmon ne personalizimin e rekomandimeve
-- error handling dhe offline/session states per me shume reliability
+- `Profile page` qe ndihmon ne personalizimin e rekomandimeve te ardhshme
+- `Error handling` dhe offline/session states per me shume reliability gjate perdorimit
 
 ## 7. Cfare kam kontrolluar para demos
 
@@ -91,35 +93,24 @@ Para prezantimit kam kontrolluar:
 
 - live URL hapet me sukses
 - README eshte i perditesuar
-- `docs/demo-plan.md` eshte shtuar
+- `docs/demo-plan.md` eshte shtuar dhe plotesuar
 - `npm run lint` kalon
 - production build eshte verifikuar me sukses
-- faqet kryesore ekzistojne dhe jane te organizuara:
-  - `/`
-  - `/auth`
-  - `/dashboard`
-  - `/style`
-  - `/outfits`
-  - `/profile`
+- faqet kryesore ekzistojne dhe jane funksionale: `/`, `/auth`, `/dashboard`, `/style`, `/outfits`, `/profile`
 - flow kryesor i demos eshte zgjedhur paraprakisht
 - shembulli i prompt-it per demo eshte i pergatitur
-- demo account duhet te jete gati para prezantimit
+- demo account eshte i gatshem per prezantim
 
 ## 8. Plan B nese live demo deshton
 
-Nese live demo deshton per shkak te internetit, Vercel, Supabase, ose AI API:
+Nese live demo deshton per shkak te internetit, Vercel, Supabase ose AI API:
 
 1. Do te perdor screenshot-e ose screen recording te pergatitura paraprakisht.
-2. Do te tregoj flow-n e plote ne baze te materialit backup:
-   - landing page
-   - auth
-   - style result
-   - outfits collection
-3. Do te hap kodin dhe do te tregoj implementimin real te pjeseve kryesore:
-   - `app/api/chat/route.ts`
-   - `app/lib/auth-context.tsx`
-   - `app/lib/outfits-db.ts`
-4. Do te tregoj qe live URL eshte verifikuar paraprakisht dhe projekti ka qene funksional para demos.
+2. Do te tregoj te njejtin flow ne materialin backup:
+   landing page, auth, style result dhe outfits collection.
+3. Do te hap kodin dhe do te shpjegoj implementimin real te pjeseve kryesore:
+   `app/api/chat/route.ts`, `app/lib/auth-context.tsx`, `app/lib/outfits-db.ts`.
+4. Do te tregoj qe live URL eshte verifikuar paraprakisht dhe qe projekti ka qene funksional para dites se demos.
 
 ## 9. Organizimi para dites se prezantimit
 
@@ -133,11 +124,11 @@ Nese live demo deshton per shkak te internetit, Vercel, Supabase, ose AI API:
 
 ## 10. Pse ky flow eshte zgjedhur
 
-Ky flow eshte zgjedhur sepse tregon ne menyre te qarte dhe profesionale kater vlera kryesore te projektit:
+Ky flow eshte zgjedhur sepse tregon ne menyre te qarte kater vlera kryesore te projektit:
 
 1. perdoruesi mund te kycet
 2. AI gjeneron vlere reale
 3. rezultati ruhet ne database
-4. aplikacioni eshte funksional si produkt real, jo vetem si prototype vizual
+4. aplikacioni funksionon si produkt real dhe jo vetem si prototype vizual
 
-Kjo e ben prezantimin te qarte, konkret dhe te lehte per t'u ndjekur brenda 5-7 minutave.
+Kjo e ben prezantimin te qarte, konkret, profesional dhe te lehte per t'u ndjekur brenda 5-7 minutave.
