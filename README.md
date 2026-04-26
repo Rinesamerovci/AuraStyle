@@ -1,120 +1,57 @@
 # AuraStyle
 
-AuraStyle is an AI fashion assistant that helps users generate outfit ideas, compare looks, and save favorite recommendations to a personal collection.
+AuraStyle is an AI fashion assistant built for users who want fast, personalized outfit ideas in Albanian, Gheg, or English. The app helps users sign in, generate style recommendations, save favorite looks, and manage a personal outfit collection.
 
-## Quick Start
+## Live Project
 
 - GitHub Repository: [https://github.com/Rinesamerovci/AuraStyle](https://github.com/Rinesamerovci/AuraStyle)
 - Live URL: [https://aurastyle-rinesa.vercel.app](https://aurastyle-rinesa.vercel.app)
-- Stack: Next.js, React, TypeScript, Supabase, Groq
-
-### Run Locally
-
-```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
-### Required `.env.local`
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-GROQ_API_KEY=your-groq-api-key
-```
-
-### Main Features
-
-- AI outfit generation in Albanian, Gheg, and English
-- Login and signup with Supabase Auth
-- Protected dashboard, style generator, and saved outfits pages
-- Save, review, edit, and delete outfit recommendations
-- Database-backed user-specific outfit history
-
-### Main Routes
-
-- `/` - landing page
-- `/auth` - authentication
-- `/dashboard` - user dashboard
-- `/style` - AI outfit generator
-- `/outfits` - saved outfits collection
-
-## Repository
-
-**GitHub Repository:** [https://github.com/Rinesamerovci/AuraStyle](https://github.com/Rinesamerovci/AuraStyle)
-
----
-
-## Vercel Deployment Status - April 7, 2026
-
-**Live URL:** [https://aurastyle-rinesa.vercel.app](https://aurastyle-rinesa.vercel.app)
-
-### Checkpoint 1: Application Deployed ✅ (30 points)
-- Application deployed and accessible on Vercel without errors
-- Live production URL: `https://aurastyle-rinesa.vercel.app`
-
-### Checkpoint 2: Core Features Live ✅ (70 points)
-
-#### AI Chat / Core Functionality ✅ (25 points)
-- Groq API integration for outfit recommendations in English, Albanian, and Gheg
-- Live feature: Generate custom outfits with AI at `/style` page
-- Multi-language support with language selection
-
-#### Authentication Working Live ✅ (15 points)
-- Supabase email/password authentication
-- Email confirmation requirement for account verification
-- Session persistence across page refreshes
-- Protected routes: `/dashboard`, `/style`, `/outfits`
-- Logout functionality with session management
-
-#### Database Working Live ✅ (15 points)
-- Supabase PostgreSQL database integration
-- Outfits table with Row Level Security (RLS) policies
-- CRUD operations fully implemented:
-  - **Create:** Save new outfit recommendations
-  - **Read:** Fetch user's saved outfits
-  - **Update:** Edit existing outfit entries
-  - **Delete:** Remove saved outfits
-- User data isolation: Each user sees only their own outfits
-- Multi-user tested and verified with RLS enforcement
-
-#### Documentation Complete ✅ (15 points)
-- Contains live URL and GitHub repository link
-- Project description, features, and tech stack
-- Environment variables documentation
-- Deployment and setup instructions included
-
----
-
-## Project Overview
-
-AuraStyle is an AI fashion assistant built with Next.js, Supabase, and Groq. Users can register, confirm their email, sign in, generate outfit ideas, and save their favorite looks to a personal collection backed by the database.
-
-## Features
-
-- AI outfit generation in Albanian, Gheg, and English
-- Supabase email/password authentication
-- Protected dashboard, style generator, and outfits collection pages
-- Database-backed saved outfits with create, read, update, and delete support
-- Responsive fashion-focused UI deployed on Vercel
+- Live URL status: verified with HTTP `200` on April 26, 2026
 
 ## Tech Stack
 
 - Next.js 16
 - React 19
 - TypeScript
-- Supabase Auth + Database
+- Supabase Auth
+- Supabase PostgreSQL
 - Groq API
 - Vercel
+
+## Main Features
+
+- Email/password authentication with Supabase
+- Protected routes for dashboard, style generator, profile, and saved outfits
+- AI outfit generation based on occasion, free-text details, and preferred language
+- Saved outfit history backed by Supabase
+- Edit and delete actions for saved outfits
+- Personal style profile to improve future recommendations
+- Offline/session/error handling for stronger demo reliability
+
+## Main User Flow
+
+1. User signs up or signs in at `/auth`
+2. User lands on `/dashboard`
+3. User opens `/style` and enters occasion + styling details
+4. AuraStyle generates up to 3 outfit ideas
+5. User saves a favorite recommendation to Supabase
+6. User reviews, edits, or deletes saved outfits at `/outfits`
+
+## Routes
+
+- `/` - landing page
+- `/auth` - sign in / sign up
+- `/dashboard` - user dashboard
+- `/style` - AI outfit generator
+- `/outfits` - saved outfits collection
+- `/profile` - personal style profile
 
 ## Environment Variables
 
 Create `.env.local` with:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 GROQ_API_KEY=your-groq-api-key
 ```
@@ -128,8 +65,21 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Deployment Notes
+## Verification Notes
 
-- Production deployment is live on Vercel: `https://aurastyle-rinesa.vercel.app`
-- Signup requires email confirmation before first login
-- Auth, AI chat, and database persistence were verified against the live deployment
+- `npm run lint` passes
+- Production build was verified successfully on April 26, 2026
+- Live Vercel URL responds successfully
+- Demo plan is included in [docs/demo-plan.md](docs/demo-plan.md)
+
+## Demo Readiness
+
+Before presenting, verify:
+
+- the live URL opens correctly
+- authentication works
+- AI generation responds
+- saving to outfits works
+- the saved outfits page loads existing data
+
+If the live demo has network issues, use the plan in [docs/demo-plan.md](docs/demo-plan.md).

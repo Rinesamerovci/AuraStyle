@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function middleware(request: NextRequest) {
-  // Skip middleware if environment variables are not set (e.g., during build)
+export async function proxy(request: NextRequest) {
+  // Skip proxy if environment variables are not set (e.g., during build)
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({
       request: {
@@ -23,9 +23,9 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll().map(c => ({
-            name: c.name,
-            value: c.value,
+          return request.cookies.getAll().map((cookie) => ({
+            name: cookie.name,
+            value: cookie.value,
           }))
         },
         setAll(cookiesToSet) {
